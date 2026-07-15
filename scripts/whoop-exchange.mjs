@@ -10,6 +10,7 @@
  *                         (default http://localhost:8789/callback)
  */
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import { encrypt, tokenRequest } from './whoop-sync.mjs';
 
 const TOKEN_URL = process.env.WHOOP_TOKEN_URL || 'https://api.prod.whoop.com/oauth/oauth2/token';
@@ -32,6 +33,14 @@ if (missing.length) {
   console.error('Add them in the repo under Settings → Secrets and variables → Actions → "Secrets" tab → "New repository secret" (NOT the Variables tab, and not Environment secrets). Names must match exactly, all caps.');
   process.exit(1);
 }
+
+/* Safe diagnostics: GitHub masks full secret values in logs, so show partial
+ * client ID (it's public — it appears in the login URL), lengths, and a hash
+ * fingerprint, never the secret itself. Compare these against the app page on
+ * developer.whoop.com to spot a wrong/truncated value. */
+const fp = (v) => crypto.createHash('sha256').update(v).digest('hex').slice(0, 8);
+console.log(`Diagnostics — client_id: starts "${WHOOP_CLIENT_ID.slice(0, 4)}", ends "${WHOOP_CLIENT_ID.slice(-4)}", length ${WHOOP_CLIENT_ID.length}, fingerprint ${fp(WHOOP_CLIENT_ID)}`);
+console.log(`Diagnostics — client_secret: length ${WHOOP_CLIENT_SECRET.length}, fingerprint ${fp(WHOOP_CLIENT_SECRET)} (fingerprint changes only when the stored value changes)`);
 
 /* Accept either the bare code or the whole pasted redirect URL. */
 function extractCode(input) {
