@@ -17,8 +17,15 @@ const REDIRECT = process.env.WHOOP_REDIRECT_URI || 'http://localhost:8789/callba
 const TOKEN_FILE = 'data/whoop-token.enc';
 
 const { WHOOP_CLIENT_ID, WHOOP_CLIENT_SECRET, WHOOP_AUTH_CODE } = process.env;
-if (!WHOOP_CLIENT_ID || !WHOOP_CLIENT_SECRET || !WHOOP_AUTH_CODE) {
-  console.error('Missing WHOOP_CLIENT_ID / WHOOP_CLIENT_SECRET secrets or the auth code input.');
+const missing = [
+  !WHOOP_CLIENT_ID && 'WHOOP_CLIENT_ID',
+  !WHOOP_CLIENT_SECRET && 'WHOOP_CLIENT_SECRET',
+  !process.env.WHOOP_TOKEN_KEY && 'WHOOP_TOKEN_KEY',
+  !WHOOP_AUTH_CODE && 'WHOOP_AUTH_CODE (workflow input)',
+].filter(Boolean);
+if (missing.length) {
+  console.error(`Missing: ${missing.join(', ')}.`);
+  console.error('Add them in the repo under Settings → Secrets and variables → Actions → "Secrets" tab → "New repository secret" (NOT the Variables tab, and not Environment secrets). Names must match exactly, all caps.');
   process.exit(1);
 }
 

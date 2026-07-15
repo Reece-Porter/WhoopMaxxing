@@ -25,6 +25,7 @@ const OUT_FILE = 'data/whoop.json';
 const { WHOOP_CLIENT_ID, WHOOP_CLIENT_SECRET, WHOOP_TOKEN_KEY } = process.env;
 if (!WHOOP_CLIENT_ID || !WHOOP_CLIENT_SECRET || !WHOOP_TOKEN_KEY) {
   console.error('Missing WHOOP_CLIENT_ID / WHOOP_CLIENT_SECRET / WHOOP_TOKEN_KEY.');
+  console.error('Add them in the repo under Settings → Secrets and variables → Actions → "Secrets" tab → "New repository secret" (NOT the Variables tab, and not Environment secrets). Names must match exactly, all caps.');
   process.exit(1);
 }
 const KEY = crypto.createHash('sha256').update(WHOOP_TOKEN_KEY).digest();
