@@ -10,7 +10,7 @@
  *                         (default http://localhost:8789/callback)
  */
 import fs from 'node:fs';
-import { encrypt } from './whoop-sync.mjs';
+import { encrypt, tokenRequest } from './whoop-sync.mjs';
 
 const TOKEN_URL = process.env.WHOOP_TOKEN_URL || 'https://api.prod.whoop.com/oauth/oauth2/token';
 const REDIRECT = process.env.WHOOP_REDIRECT_URI || 'http://localhost:8789/callback';
@@ -53,22 +53,20 @@ if (!code) {
   process.exit(1);
 }
 
-const body = new URLSearchParams({
-  grant_type: 'authorization_code',
-  code,
-  client_id: WHOOP_CLIENT_ID,
-  client_secret: WHOOP_CLIENT_SECRET,
-  redirect_uri: REDIRECT,
-});
-const r = await fetch(TOKEN_URL, {
-  method: 'POST',
-  headers: { 'content-type': 'application/x-www-form-urlencoded' },
-  body,
-});
+const r = await tokenRequest(
+  TOKEN_URL,
+  { grant_type: 'authorization_code', code, redirect_uri: REDIRECT },
+  WHOOP_CLIENT_ID,
+  WHOOP_CLIENT_SECRET
+);
 const tok = await r.json().catch(() => ({}));
 if (!r.ok || !tok.refresh_token) {
   console.error(`Token exchange failed (${r.status}): ${JSON.stringify(tok)}`);
-  console.error('Auth codes expire after a few minutes and are single-use — get a fresh one and run this workflow again promptly. Also check the redirect URI matches the one registered on developer.whoop.com.');
+  if (tok.error === 'invalid_client') {
+    console.error('Whoop rejected the client credentials (both auth methods were tried). The WHOOP_CLIENT_SECRET secret almost certainly holds the wrong value: on developer.whoop.com open your app, re-copy the Client Secret (regenerate it if unsure), update the GitHub secret, then get a fresh login code and run this workflow again.');
+  } else {
+    console.error('Auth codes expire after a few minutes and are single-use — get a fresh one and run this workflow again promptly. Also check the redirect URI matches the one registered on developer.whoop.com.');
+  }
   process.exit(1);
 }
 

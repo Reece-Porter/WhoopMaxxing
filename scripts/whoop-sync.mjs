@@ -63,19 +63,34 @@ function loadRefreshToken() {
   process.exit(1);
 }
 
-async function refreshAccessToken(refreshToken) {
-  const body = new URLSearchParams({
-    grant_type: 'refresh_token',
-    refresh_token: refreshToken,
-    client_id: WHOOP_CLIENT_ID,
-    client_secret: WHOOP_CLIENT_SECRET,
-    scope: 'offline',
-  });
-  const r = await fetch(TOKEN_URL, {
+/* OAuth clients can be registered for body credentials (client_secret_post)
+ * or a Basic header (client_secret_basic); try the body first and fall back
+ * to Basic on a 401 so either registration works. */
+export async function tokenRequest(tokenUrl, params, clientId, clientSecret) {
+  const form = { 'content-type': 'application/x-www-form-urlencoded' };
+  let r = await fetch(tokenUrl, {
     method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body,
+    headers: form,
+    body: new URLSearchParams({ ...params, client_id: clientId, client_secret: clientSecret }),
   });
+  if (r.status === 401) {
+    const basic = Buffer.from(`${encodeURIComponent(clientId)}:${encodeURIComponent(clientSecret)}`).toString('base64');
+    r = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: { ...form, authorization: `Basic ${basic}` },
+      body: new URLSearchParams(params),
+    });
+  }
+  return r;
+}
+
+async function refreshAccessToken(refreshToken) {
+  const r = await tokenRequest(
+    TOKEN_URL,
+    { grant_type: 'refresh_token', refresh_token: refreshToken, scope: 'offline' },
+    WHOOP_CLIENT_ID,
+    WHOOP_CLIENT_SECRET
+  );
   const tok = await r.json();
   if (!r.ok || !tok.access_token) {
     throw new Error(`Token refresh failed (${r.status}): ${JSON.stringify(tok)}. If this persists, re-run scripts/whoop-auth.mjs and update the WHOOP_REFRESH_TOKEN secret, then delete ${TOKEN_FILE}.`);
