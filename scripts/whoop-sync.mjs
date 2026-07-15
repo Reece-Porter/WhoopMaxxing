@@ -17,7 +17,7 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 
 const BASE = process.env.WHOOP_API_BASE || 'https://api.prod.whoop.com/developer/v2';
-const TOKEN_URL = 'https://api.prod.whoop.com/oauth/oauth2/token';
+const TOKEN_URL = process.env.WHOOP_TOKEN_URL || 'https://api.prod.whoop.com/oauth/oauth2/token';
 const DAYS = +(process.env.WHOOP_SYNC_DAYS || 90);
 const TOKEN_FILE = 'data/whoop-token.enc';
 const OUT_FILE = 'data/whoop.json';
@@ -29,7 +29,7 @@ if (!WHOOP_CLIENT_ID || !WHOOP_CLIENT_SECRET || !WHOOP_TOKEN_KEY) {
 }
 const KEY = crypto.createHash('sha256').update(WHOOP_TOKEN_KEY).digest();
 
-function encrypt(text) {
+export function encrypt(text) {
   const iv = crypto.randomBytes(12);
   const c = crypto.createCipheriv('aes-256-gcm', KEY, iv);
   const enc = Buffer.concat([c.update(text, 'utf8'), c.final()]);

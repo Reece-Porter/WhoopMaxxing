@@ -29,27 +29,26 @@ To change the pattern, start date or shift times, edit the `ROTA` object at the 
 
 Whoop's API uses OAuth with a client secret and blocks direct browser calls, so a static page can't talk to it directly. Instead, the included GitHub Action (`.github/workflows/whoop-sync.yml`) syncs for you on GitHub's servers — free, no hosting needed.
 
+Everything happens in your browser and on GitHub — **nothing to install**. (`whoop-connect.html` on the site walks you through the same steps interactively.)
+
 1. **Register an app** at [developer.whoop.com](https://developer.whoop.com) (log in with your normal Whoop account → create an app). Set the redirect URI to exactly `http://localhost:8789/callback`, and enable the scopes `read:recovery`, `read:sleep`, `read:cycles`, `read:profile` and `offline`. Copy the **Client ID** and **Client Secret**.
 
-2. **Authorise once, on your own computer** (needs [Node.js](https://nodejs.org) installed):
+2. **Add three repository secrets** on GitHub: *Settings → Secrets and variables → Actions → New repository secret*:
+   - `WHOOP_CLIENT_ID` and `WHOOP_CLIENT_SECRET` — from step 1
+   - `WHOOP_TOKEN_KEY` — make up any long random password (it encrypts your token in the repo)
 
-   ```sh
-   WHOOP_CLIENT_ID=your_id WHOOP_CLIENT_SECRET=your_secret node scripts/whoop-auth.mjs
-   ```
+3. **Log in to Whoop**: open the site's **Connect Whoop** page (`whoop-connect.html`), enter your Client ID and click *Open Whoop login*, then approve access. You'll land on a **broken `localhost` page — that's expected**: the one-time code is in the address bar. Copy the full URL.
 
-   (On Windows PowerShell: `$env:WHOOP_CLIENT_ID="your_id"; $env:WHOOP_CLIENT_SECRET="your_secret"; node scripts/whoop-auth.mjs`.)
-   Open the printed URL, log in to Whoop, approve — the script prints four values.
+4. **Run the authorise workflow**: repo → *Actions* tab → **Whoop authorise** → *Run workflow* → paste the URL you copied → run. Do steps 3–4 within a few minutes (codes expire fast). The workflow exchanges the code on GitHub's servers, stores the token encrypted, and runs your first sync.
 
-3. **Add the four repository secrets** on GitHub: *Settings → Secrets and variables → Actions → New repository secret*:
-   `WHOOP_CLIENT_ID`, `WHOOP_CLIENT_SECRET`, `WHOOP_REFRESH_TOKEN`, `WHOOP_TOKEN_KEY` (all printed by step 2).
-
-4. **Run it**: go to the *Actions* tab → *Whoop sync* → *Run workflow*. It commits `data/whoop.json` (your last 90 days) and from then on re-syncs every 3 hours automatically. The Whoop page shows "Auto-synced…" with the last sync time once it's working.
+Done — `data/whoop.json` (your last 90 days) is committed and the **Whoop sync** workflow re-syncs every 3 hours from then on. The Whoop page shows "Auto-synced…" with the last sync time once it's working.
 
 Notes:
-- The scheduled run only fires on the repository's **default branch**, so merge this branch first (a manual *Run workflow* works on any branch).
-- Whoop rotates refresh tokens on every use. The current token is stored encrypted in `data/whoop-token.enc` (AES-256-GCM, keyed by your `WHOOP_TOKEN_KEY` secret) and updated by each run — the `WHOOP_REFRESH_TOKEN` secret is only used the first time. If the sync ever breaks with a token error, re-run step 2 and update the `WHOOP_REFRESH_TOKEN` secret, then delete `data/whoop-token.enc`.
-- Your Whoop stats end up in `data/whoop.json` in the repo — keep the repository **private** if you don't want them public.
+- The scheduled run only fires on the repository's **default branch**, so merge this branch first (manual *Run workflow* works on any branch).
+- Whoop rotates refresh tokens on every use. The current token is stored encrypted in `data/whoop-token.enc` (AES-256-GCM, keyed by your `WHOOP_TOKEN_KEY` secret) and updated by each run. If the sync ever breaks with a token error, just repeat steps 3–4.
+- Your Whoop stats end up in `data/whoop.json` in the repo — keep the repository **private** if you don't want them public. (The pasted auth code is visible in the workflow run log, but it's single-use and expires in minutes.)
 - Synced days merge with (and overwrite) CSV/manual entries for the same date.
+- Prefer the terminal? `scripts/whoop-auth.mjs` still exists: run it locally with Node, add the printed `WHOOP_REFRESH_TOKEN` secret, and trigger *Whoop sync* directly.
 
 ## Running locally
 

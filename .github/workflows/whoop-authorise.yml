@@ -1,0 +1,62 @@
+name: Whoop authorise
+
+# One-time setup, no local machine needed:
+# 1. Open the Whoop login link (see whoop-connect.html or README).
+# 2. After approving you land on a broken localhost page — copy the FULL URL
+#    from the address bar.
+# 3. Run this workflow (Actions tab → Whoop authorise → Run workflow) and
+#    paste that URL. Codes expire after a few minutes, so do this promptly.
+# It stores the refresh token (encrypted) and runs the first sync.
+
+on:
+  workflow_dispatch:
+    inputs:
+      auth_url:
+        description: 'Paste the full localhost URL you were redirected to (or just the code=... value)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: whoop-sync
+  cancel-in-progress: false
+
+jobs:
+  authorise:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Exchange code for refresh token
+        run: node scripts/whoop-exchange.mjs
+        env:
+          WHOOP_CLIENT_ID: ${{ secrets.WHOOP_CLIENT_ID }}
+          WHOOP_CLIENT_SECRET: ${{ secrets.WHOOP_CLIENT_SECRET }}
+          WHOOP_TOKEN_KEY: ${{ secrets.WHOOP_TOKEN_KEY }}
+          WHOOP_AUTH_CODE: ${{ inputs.auth_url }}
+
+      - name: Run first sync
+        run: node scripts/whoop-sync.mjs
+        env:
+          WHOOP_CLIENT_ID: ${{ secrets.WHOOP_CLIENT_ID }}
+          WHOOP_CLIENT_SECRET: ${{ secrets.WHOOP_CLIENT_SECRET }}
+          WHOOP_TOKEN_KEY: ${{ secrets.WHOOP_TOKEN_KEY }}
+
+      - name: Commit token and data
+        run: |
+          git config user.name "whoop-sync[bot]"
+          git config user.email "whoop-sync@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git commit -m "chore: authorise Whoop and run first sync"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            git push
+          fi

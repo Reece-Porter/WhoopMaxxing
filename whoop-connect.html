@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ShiftMaxx — Connect Whoop</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="whoop">
+  <header class="top">
+    <div class="wrap">
+      <div class="brand">Shift<span>Maxx</span></div>
+      <nav class="nav">
+        <a href="index.html" data-page="home">Dashboard</a>
+        <a href="rota.html" data-page="rota">Rota</a>
+        <a href="whoop.html" data-page="whoop">Whoop</a>
+        <a href="meals.html" data-page="meals">Meal prep</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap" style="max-width:760px">
+    <h1>Connect Whoop</h1>
+    <p class="sub">One-time setup, browser only — nothing to install. Your password and secrets never touch this page; it only builds the official Whoop login link.</p>
+
+    <div class="card" style="margin-bottom:12px">
+      <h2 style="margin-top:0">Step 0 — prerequisites (once)</h2>
+      <p class="notice">1. Create an app at <a href="https://developer.whoop.com" target="_blank" rel="noopener">developer.whoop.com</a> with redirect URI exactly <code>http://localhost:8789/callback</code> and scopes <code>read:recovery</code>, <code>read:sleep</code>, <code>read:cycles</code>, <code>read:profile</code>, <code>offline</code>.</p>
+      <p class="notice">2. In your GitHub repo → <strong>Settings → Secrets and variables → Actions</strong>, add three secrets: <code>WHOOP_CLIENT_ID</code>, <code>WHOOP_CLIENT_SECRET</code> (both from the Whoop app page) and <code>WHOOP_TOKEN_KEY</code> (make up any long random password — it encrypts your token).</p>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <h2 style="margin-top:0">Step 1 — log in to Whoop</h2>
+      <form id="auth-form" class="form-row">
+        <label class="field" style="flex:1;min-width:220px">Your Whoop Client ID
+          <input id="client-id" type="text" placeholder="from developer.whoop.com" autocomplete="off">
+        </label>
+        <button class="primary" type="submit">Open Whoop login</button>
+      </form>
+      <p class="notice" style="margin-bottom:0">Approve access. You'll then land on a <strong>broken localhost page — that's expected.</strong></p>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <h2 style="margin-top:0">Step 2 — paste the URL you landed on</h2>
+      <p class="notice">Copy the full address from the browser bar (it starts with <code>http://localhost:8789/callback?code=…</code>) and paste it here:</p>
+      <form id="code-form" class="form-row">
+        <input id="redirect-url" type="text" placeholder="http://localhost:8789/callback?code=…" style="flex:1;min-width:220px" autocomplete="off">
+        <button class="primary" type="submit">Check</button>
+      </form>
+      <p id="code-result" style="font-size:14px"></p>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-top:0">Step 3 — run the "Whoop authorise" workflow</h2>
+      <p class="notice">In your repo: <strong>Actions tab → Whoop authorise → Run workflow</strong>, paste the same URL into the box and run it. Do this within a few minutes — codes expire fast. The workflow swaps the code for a token on GitHub's servers, stores it encrypted, and runs your first sync. After that, syncing is automatic every 3 hours.</p>
+    </div>
+  </main>
+
+  <script src="assets/js/shifts.js"></script>
+  <script>
+    const AUTH_URL = 'https://api.prod.whoop.com/oauth/oauth2/auth';
+    const REDIRECT = 'http://localhost:8789/callback';
+    const SCOPE = 'offline read:recovery read:sleep read:cycles read:profile';
+
+    document.getElementById('auth-form').addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const id = document.getElementById('client-id').value.trim();
+      if (!id) return;
+      const state = Array.from(crypto.getRandomValues(new Uint8Array(8)), (b) => b.toString(16).padStart(2, '0')).join('');
+      const url = `${AUTH_URL}?response_type=code&client_id=${encodeURIComponent(id)}` +
+        `&redirect_uri=${encodeURIComponent(REDIRECT)}&scope=${encodeURIComponent(SCOPE)}&state=${state}`;
+      window.open(url, '_blank', 'noopener');
+    });
+
+    document.getElementById('code-form').addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      const out = document.getElementById('code-result');
+      const raw = document.getElementById('redirect-url').value.trim();
+      let code = null;
+      try { code = new URL(raw).searchParams.get('code'); } catch { const m = raw.match(/[?&]code=([^&\s]+)/); if (m) code = m[1]; }
+      if (code) {
+        out.innerHTML = '✅ Code found — now do <strong>Step 3</strong> straight away (paste the same URL into the workflow input).';
+        out.className = '';
+      } else {
+        out.textContent = 'No "code=" found in that URL. Make sure you copied the full address after approving, and that it wasn\'t already used.';
+        out.className = 'error-text';
+      }
+    });
+  </script>
+</body>
+</html>
