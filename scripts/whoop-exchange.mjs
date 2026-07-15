@@ -16,11 +16,15 @@ const TOKEN_URL = process.env.WHOOP_TOKEN_URL || 'https://api.prod.whoop.com/oau
 const REDIRECT = process.env.WHOOP_REDIRECT_URI || 'http://localhost:8789/callback';
 const TOKEN_FILE = 'data/whoop-token.enc';
 
-const { WHOOP_CLIENT_ID, WHOOP_CLIENT_SECRET, WHOOP_AUTH_CODE } = process.env;
+// Secrets and pasted inputs often carry stray whitespace/newlines — strip them
+const envTrim = (k) => (process.env[k] || '').trim();
+const WHOOP_CLIENT_ID = envTrim('WHOOP_CLIENT_ID');
+const WHOOP_CLIENT_SECRET = envTrim('WHOOP_CLIENT_SECRET');
+const WHOOP_AUTH_CODE = envTrim('WHOOP_AUTH_CODE');
 const missing = [
   !WHOOP_CLIENT_ID && 'WHOOP_CLIENT_ID',
   !WHOOP_CLIENT_SECRET && 'WHOOP_CLIENT_SECRET',
-  !process.env.WHOOP_TOKEN_KEY && 'WHOOP_TOKEN_KEY',
+  !envTrim('WHOOP_TOKEN_KEY') && 'WHOOP_TOKEN_KEY',
   !WHOOP_AUTH_CODE && 'WHOOP_AUTH_CODE (workflow input)',
 ].filter(Boolean);
 if (missing.length) {

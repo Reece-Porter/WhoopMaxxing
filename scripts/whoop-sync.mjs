@@ -22,7 +22,11 @@ const DAYS = +(process.env.WHOOP_SYNC_DAYS || 90);
 const TOKEN_FILE = 'data/whoop-token.enc';
 const OUT_FILE = 'data/whoop.json';
 
-const { WHOOP_CLIENT_ID, WHOOP_CLIENT_SECRET, WHOOP_TOKEN_KEY } = process.env;
+// Secrets pasted into GitHub often carry a stray trailing newline — strip it
+const envTrim = (k) => (process.env[k] || '').trim();
+const WHOOP_CLIENT_ID = envTrim('WHOOP_CLIENT_ID');
+const WHOOP_CLIENT_SECRET = envTrim('WHOOP_CLIENT_SECRET');
+const WHOOP_TOKEN_KEY = envTrim('WHOOP_TOKEN_KEY');
 if (!WHOOP_CLIENT_ID || !WHOOP_CLIENT_SECRET || !WHOOP_TOKEN_KEY) {
   console.error('Missing WHOOP_CLIENT_ID / WHOOP_CLIENT_SECRET / WHOOP_TOKEN_KEY.');
   console.error('Add them in the repo under Settings → Secrets and variables → Actions → "Secrets" tab → "New repository secret" (NOT the Variables tab, and not Environment secrets). Names must match exactly, all caps.');
@@ -51,9 +55,9 @@ function loadRefreshToken() {
       console.error(`Could not decrypt ${TOKEN_FILE} (WHOOP_TOKEN_KEY changed?): ${e.message}`);
     }
   }
-  if (process.env.WHOOP_REFRESH_TOKEN) {
+  if (envTrim('WHOOP_REFRESH_TOKEN')) {
     console.log('Using WHOOP_REFRESH_TOKEN secret (first run).');
-    return process.env.WHOOP_REFRESH_TOKEN;
+    return envTrim('WHOOP_REFRESH_TOKEN');
   }
   console.error('No refresh token available: set the WHOOP_REFRESH_TOKEN secret (run scripts/whoop-auth.mjs to get one).');
   process.exit(1);
