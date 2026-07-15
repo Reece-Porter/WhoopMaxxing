@@ -67,17 +67,21 @@
         <div class="delta">${today.code === 'O' ? `Rest day ${today.run}/${today.runLength}` : `${today.run} of ${today.runLength} · ${today.times.start}–${today.times.end}`}</div>`;
       tiles.appendChild(shiftTile);
 
-      const whoop = getWhoopData();
-      const keys = Object.keys(whoop).sort();
       const recTile = document.createElement('div');
       recTile.className = 'card tile';
-      const latest = keys.length ? whoop[keys[keys.length - 1]] : null;
-      if (latest && latest.recovery !== undefined) {
-        const st = latest.recovery >= 67 ? '✅ Green' : latest.recovery >= 34 ? '⚠️ Yellow' : '⛔ Red';
-        recTile.innerHTML = `<div class="label">Latest recovery</div><div class="value">${latest.recovery}<small>%</small></div><div class="delta">${st} · ${keys[keys.length - 1]}</div>`;
-      } else {
-        recTile.innerHTML = `<div class="label">Latest recovery</div><div class="value">—</div><div class="delta"><a href="whoop.html">Import Whoop data</a></div>`;
-      }
+      const fillRecTile = () => {
+        const whoop = getWhoopData();
+        const keys = Object.keys(whoop).sort();
+        const latest = keys.length ? whoop[keys[keys.length - 1]] : null;
+        if (latest && latest.recovery !== undefined) {
+          const st = latest.recovery >= 67 ? '✅ Green' : latest.recovery >= 34 ? '⚠️ Yellow' : '⛔ Red';
+          recTile.innerHTML = `<div class="label">Latest recovery</div><div class="value">${latest.recovery}<small>%</small></div><div class="delta">${st} · ${keys[keys.length - 1]}</div>`;
+        } else {
+          recTile.innerHTML = `<div class="label">Latest recovery</div><div class="value">—</div><div class="delta"><a href="whoop.html">Import Whoop data</a></div>`;
+        }
+      };
+      fillRecTile();
+      loadRepoWhoopData().then((updated) => { if (updated) fillRecTile(); });
       tiles.appendChild(recTile);
 
       const plans = getMealPlans();

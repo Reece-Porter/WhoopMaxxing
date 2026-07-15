@@ -312,5 +312,15 @@
     });
 
     refresh();
+
+    // Merge in API-synced data if the Whoop-sync workflow is set up
+    loadRepoWhoopData().then((updated) => {
+      if (!updated) return;
+      const el = document.getElementById('sync-status');
+      if (el) {
+        el.textContent = `🔄 Auto-synced from the Whoop API — last sync ${new Date(updated).toLocaleString()}.`;
+      }
+      refresh();
+    });
   });
 })();

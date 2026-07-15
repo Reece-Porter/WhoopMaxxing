@@ -37,6 +37,24 @@ function setTargets(t) {
   Store.set('targets', t);
 }
 
+/* Merges data/whoop.json (written by the Whoop-sync GitHub Action, if set up)
+ * into the local store. Resolves with the sync timestamp, or null if the file
+ * doesn't exist / can't be fetched (e.g. opened from disk). */
+async function loadRepoWhoopData() {
+  try {
+    const res = await fetch('data/whoop.json', { cache: 'no-store' });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!json || !json.days) return null;
+    const data = getWhoopData();
+    for (const key in json.days) data[key] = { ...(data[key] || {}), ...json.days[key] };
+    setWhoopData(data);
+    return json.updated || null;
+  } catch {
+    return null;
+  }
+}
+
 function getFavourites() {
   return Store.get('favs', []);
 }

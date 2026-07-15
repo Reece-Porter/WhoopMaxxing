@@ -26,7 +26,9 @@
 
     <div class="grid cols-2">
       <div class="card">
-        <h2 style="margin-top:0">Import Whoop CSV</h2>
+        <h2 style="margin-top:0">Get your data in</h2>
+        <p id="sync-status" class="notice">Auto-sync not detected — set up the Whoop API sync (see <code>README.md</code>, ~10 minutes) and this page will update itself every 3 hours. Or import manually below.</p>
+        <h3 style="font-size:14px;margin:14px 0 4px">Import Whoop CSV</h3>
         <p class="notice">In the Whoop app: <strong>More → App settings → Data export</strong>. You'll get an email with a zip — upload the <code>physiological_cycles.csv</code> file here. Re-importing updates existing days.</p>
         <input type="file" id="csv-file" accept=".csv,text/csv" aria-label="Whoop CSV file">
         <p id="import-msg" class="notice"></p>
