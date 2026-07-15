@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ShiftMaxx — Meal prep</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="meals">
+  <header class="top">
+    <div class="wrap">
+      <div class="brand">Shift<span>Maxx</span></div>
+      <nav class="nav">
+        <a href="index.html" data-page="home">Dashboard</a>
+        <a href="rota.html" data-page="rota">Rota</a>
+        <a href="whoop.html" data-page="whoop">Whoop</a>
+        <a href="meals.html" data-page="meals">Meal prep</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1>Meal prep</h1>
+    <p class="sub">Search foods or scan barcodes (nutrition data from <a href="https://world.openfoodfacts.org" target="_blank" rel="noopener">Open Food Facts</a> — MyFitnessPal has no public API, this is the open database behind many macro apps). Meal sections adapt to the shift you're on that day.</p>
+
+    <div class="grid cols-2">
+      <div>
+        <div class="card">
+          <h2 style="margin-top:0">Find food</h2>
+          <form id="search-form" class="form-row">
+            <input id="search-q" type="search" placeholder="e.g. chicken breast, oats…" style="flex:1;min-width:180px" aria-label="Food search">
+            <button class="primary" type="submit">Search</button>
+          </form>
+
+          <h3 style="font-size:14px;margin:16px 0 6px">Barcode</h3>
+          <form id="barcode-form" class="form-row">
+            <input id="barcode-q" type="text" inputmode="numeric" placeholder="Type barcode number…" style="flex:1;min-width:150px" aria-label="Barcode number">
+            <button type="submit">Look up</button>
+            <button type="button" id="scan-start">📷 Scan</button>
+            <button type="button" id="scan-stop" hidden>Stop camera</button>
+          </form>
+          <video id="scanner-video" hidden playsinline muted></video>
+          <p id="scan-msg" class="notice"></p>
+
+          <div id="results"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h2 style="margin-top:0">Favourites</h2>
+          <div id="favourites"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h2 style="margin-top:0">Daily targets</h2>
+          <form id="targets-form" class="form-row">
+            <label class="field">Calories <input type="number" name="kcal" min="0" style="width:90px"></label>
+            <label class="field">Protein g <input type="number" name="protein" min="0" style="width:80px"></label>
+            <label class="field">Carbs g <input type="number" name="carbs" min="0" style="width:80px"></label>
+            <label class="field">Fat g <input type="number" name="fat" min="0" style="width:80px"></label>
+            <button type="submit">Save</button>
+          </form>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2 style="margin-top:0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            Plan for <input type="date" id="plan-date" aria-label="Plan date">
+          </h2>
+          <p id="plan-shift" style="margin:4px 0 14px"></p>
+          <div id="meal-sections"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h2 style="margin-top:0">Day totals</h2>
+          <div id="totals"></div>
+        </div>
+      </div>
+    </div>
+
+    <dialog id="add-dialog" style="background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:12px;padding:20px;max-width:360px">
+      <form id="add-form">
+        <h3 style="margin:0 0 4px">Add to plan</h3>
+        <p id="add-food-name" class="notice" style="margin:0 0 12px"></p>
+        <div class="form-row">
+          <label class="field">Amount (g) <input type="number" id="add-grams" min="1" value="100" style="width:90px"></label>
+          <label class="field">Meal <select id="add-section"></select></label>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" id="add-cancel" class="ghost">Cancel</button>
+          <button type="submit" class="primary">Add</button>
+        </div>
+      </form>
+    </dialog>
+  </main>
+
+  <script src="assets/js/shifts.js"></script>
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/meals.js"></script>
+</body>
+</html>

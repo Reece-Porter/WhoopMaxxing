@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ShiftMaxx — Whoop data</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="whoop">
+  <header class="top">
+    <div class="wrap">
+      <div class="brand">Shift<span>Maxx</span></div>
+      <nav class="nav">
+        <a href="index.html" data-page="home">Dashboard</a>
+        <a href="rota.html" data-page="rota">Rota</a>
+        <a href="whoop.html" data-page="whoop">Whoop</a>
+        <a href="meals.html" data-page="meals">Meal prep</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1>Whoop data</h1>
+    <p class="sub" id="latest-date">Import your Whoop export or log days manually — everything is stored privately in this browser.</p>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h2 style="margin-top:0">Import Whoop CSV</h2>
+        <p class="notice">In the Whoop app: <strong>More → App settings → Data export</strong>. You'll get an email with a zip — upload the <code>physiological_cycles.csv</code> file here. Re-importing updates existing days.</p>
+        <input type="file" id="csv-file" accept=".csv,text/csv" aria-label="Whoop CSV file">
+        <p id="import-msg" class="notice"></p>
+        <p class="notice" id="entry-count"></p>
+        <button id="clear-data" class="small ghost">Clear all stored data</button>
+      </div>
+
+      <div class="card">
+        <h2 style="margin-top:0">Manual entry</h2>
+        <form id="manual-form">
+          <div class="form-row">
+            <label class="field">Date <input type="date" name="date" required></label>
+            <label class="field">Recovery % <input type="number" name="recovery" min="0" max="100" step="1"></label>
+            <label class="field">HRV (ms) <input type="number" name="hrv" min="0" step="1"></label>
+          </div>
+          <div class="form-row" style="margin-top:10px">
+            <label class="field">Resting HR (bpm) <input type="number" name="rhr" min="0" step="1"></label>
+            <label class="field">Sleep (hours) <input type="number" name="sleepH" min="0" max="24" step="0.1"></label>
+            <label class="field">Sleep perf % <input type="number" name="sleepPerf" min="0" max="100" step="1"></label>
+            <label class="field">Day strain <input type="number" name="strain" min="0" max="21" step="0.1"></label>
+          </div>
+          <div style="margin-top:12px"><button class="primary" type="submit">Save day</button></div>
+        </form>
+      </div>
+    </div>
+
+    <h2>Today</h2>
+    <div class="grid cols-3" id="tiles"></div>
+
+    <h2>Recommendations</h2>
+    <p class="notice" style="margin-top:-6px;margin-bottom:12px">Rules-based guidance combining your rota with your recovery, HRV, resting HR, sleep and strain. Not medical advice.</p>
+    <div id="recs"></div>
+
+    <h2 style="display:flex;justify-content:space-between;align-items:center">Trends
+      <select id="range" aria-label="Date range">
+        <option value="14">Last 14 days</option>
+        <option value="30" selected>Last 30 days</option>
+        <option value="90">Last 90 days</option>
+      </select>
+    </h2>
+    <div class="grid cols-2">
+      <div id="chart-recovery"></div>
+      <div id="chart-hrv"></div>
+      <div id="chart-rhr"></div>
+      <div id="chart-sleepH"></div>
+      <div id="chart-strain"></div>
+    </div>
+  </main>
+
+  <script src="assets/js/shifts.js"></script>
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/charts.js"></script>
+  <script src="assets/js/whoop.js"></script>
+</body>
+</html>

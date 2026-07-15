@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ShiftMaxx — Rota</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="rota">
+  <header class="top">
+    <div class="wrap">
+      <div class="brand">Shift<span>Maxx</span></div>
+      <nav class="nav">
+        <a href="index.html" data-page="home">Dashboard</a>
+        <a href="rota.html" data-page="rota">Rota</a>
+        <a href="whoop.html" data-page="whoop">Whoop</a>
+        <a href="meals.html" data-page="meals">Meal prep</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1>Rota</h1>
+    <p class="sub">4 nights → 4 off → 4 days → 4 off, repeating every 16 days from 19 July 2026. Nights 19:00–07:00, days 07:00–19:00.</p>
+
+    <p id="rota-summary" class="card" style="font-size:14px"></p>
+
+    <div class="legend" aria-hidden="false">
+      <span class="key"><span class="swatch" style="background:var(--shift-night)"></span> Night shift</span>
+      <span class="key"><span class="swatch" style="background:var(--shift-day)"></span> Day shift</span>
+      <span class="key"><span class="swatch" style="background:var(--surface-2);border:1px solid var(--border)"></span> Off</span>
+    </div>
+
+    <div class="cal-head">
+      <h2 id="cal-title"></h2>
+      <div style="display:flex;gap:6px">
+        <button id="cal-prev" aria-label="Previous month">←</button>
+        <button id="cal-today">Today</button>
+        <button id="cal-next" aria-label="Next month">→</button>
+      </div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+
+    <p class="notice" style="margin-top:16px">To change the pattern or start date, edit <code>ROTA</code> at the top of <code>assets/js/shifts.js</code>.</p>
+  </main>
+
+  <script src="assets/js/shifts.js"></script>
+  <script src="assets/js/rota.js"></script>
+</body>
+</html>
