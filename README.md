@@ -16,8 +16,9 @@ To change the pattern, start date or shift times, edit the `ROTA` object at the 
 - **Import**: in the Whoop app go to *More → App settings → Data export*, then upload the `physiological_cycles.csv` from the emailed zip. Re-importing merges/updates days.
 - **Manual entry** for logging a day quickly.
 - **Stat tiles** for recovery, HRV and resting HR (vs your 14-day average), sleep and strain.
-- **Trend charts** (14/30/90 days) with hover tooltips and an accessible table view.
-- **Recommendations**: rules that combine your rota position (first night, mid-nights, flip-back day, day shifts, rest days) with recovery colour, HRV/RHR deviation from baseline, sleep debt and strain-vs-recovery mismatch. Guidance only — not medical advice.
+- **Trend charts** (14/30/90 days) for **every metric Whoop exposes** — recovery, HRV, resting HR, blood oxygen, skin temp, sleep duration/need/performance/consistency/efficiency, REM/deep/light/awake, disturbances, respiratory rate, strain, calories, average/max HR — with hover tooltips and an accessible table view.
+- **Today's plan**: rules that combine your rota position (first night, mid-nights, flip-back day, day shifts, rest days) with recovery colour, HRV/RHR deviation from baseline, sleep debt and strain-vs-recovery mismatch.
+- **How to improve each score**: your latest value for every metric, judged against healthy ranges or your own 14-day average, with the specific levers that move it — tuned for shift work. Guidance only — not medical advice.
 
 ### 🍽️ Meal prep (`meals.html`)
 - **Search by name** or **look up / camera-scan barcodes** against [Open Food Facts](https://world.openfoodfacts.org) (free, open database). MyFitnessPal shut down its public API, so it can't be linked directly — Open Food Facts is the open equivalent used by many macro apps.

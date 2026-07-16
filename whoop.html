@@ -58,24 +58,22 @@
     <h2>Today</h2>
     <div class="grid cols-3" id="tiles"></div>
 
-    <h2>Recommendations</h2>
+    <h2>Today's plan</h2>
     <p class="notice" style="margin-top:-6px;margin-bottom:12px">Rules-based guidance combining your rota with your recovery, HRV, resting HR, sleep and strain. Not medical advice.</p>
     <div id="recs"></div>
 
-    <h2 style="display:flex;justify-content:space-between;align-items:center">Trends
+    <h2 style="display:flex;justify-content:space-between;align-items:center">Trends — every Whoop metric
       <select id="range" aria-label="Date range">
         <option value="14">Last 14 days</option>
         <option value="30" selected>Last 30 days</option>
         <option value="90">Last 90 days</option>
       </select>
     </h2>
-    <div class="grid cols-2">
-      <div id="chart-recovery"></div>
-      <div id="chart-hrv"></div>
-      <div id="chart-rhr"></div>
-      <div id="chart-sleepH"></div>
-      <div id="chart-strain"></div>
-    </div>
+    <div id="charts"></div>
+
+    <h2>How to improve each score</h2>
+    <p class="notice" style="margin-top:-6px;margin-bottom:12px">Your latest value for every metric, judged against healthy ranges or your own 14-day average, with the levers that move it. Not medical advice.</p>
+    <div id="guide"></div>
   </main>
 
   <script src="assets/js/shifts.js"></script>

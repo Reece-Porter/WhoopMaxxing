@@ -122,21 +122,32 @@ async function fetchAll(accessToken, path) {
   return records;
 }
 
-/* Maps Whoop records to the site's per-day shape:
- * { recovery, hrv, rhr, sleepH, sleepPerf, strain } keyed by YYYY-MM-DD (UTC). */
+/* Maps Whoop records to the site's per-day shape, keyed by YYYY-MM-DD (UTC).
+ * Every score the v2 API exposes per day is captured:
+ *   cycle    → strain, calories, avgHR, maxHR
+ *   sleep    → sleepH, remH, deepH, lightH, awakeH, sleepNeedH, disturbances,
+ *              sleepPerf, sleepConsistency, sleepEfficiency, respRate
+ *   recovery → recovery, hrv, rhr, spo2, skinTemp (calibrating values included
+ *              so new members see whatever Whoop has computed) */
 export function mapRecords({ cycles, sleeps, recoveries }) {
   const days = {};
   const day = (iso) => iso && iso.slice(0, 10);
   const at = (k) => (days[k] = days[k] || {});
+  const put = (k, field, value, dp = 0) => {
+    if (value === undefined || value === null || Number.isNaN(+value)) return;
+    at(k)[field] = +(+value).toFixed(dp);
+  };
 
   const cycleDay = {};
   for (const c of cycles) {
     const k = day(c.start);
     if (!k) continue;
     cycleDay[c.id] = k;
-    if (c.score_state === 'SCORED' && c.score?.strain !== undefined) {
-      at(k).strain = +c.score.strain.toFixed(1);
-    }
+    if (c.score_state !== 'SCORED' || !c.score) continue;
+    put(k, 'strain', c.score.strain, 1);
+    if (c.score.kilojoule) put(k, 'calories', c.score.kilojoule / 4.184);
+    put(k, 'avgHR', c.score.average_heart_rate);
+    put(k, 'maxHR', c.score.max_heart_rate);
   }
 
   // keep the longest non-nap sleep per day (day sleeps after nights land on the day they end)
@@ -151,21 +162,43 @@ export function mapRecords({ cycles, sleeps, recoveries }) {
       (st.total_rem_sleep_time_milli || 0) +
       (st.total_slow_wave_sleep_time_milli || 0);
     if (!bestSleep[k] || asleepMs > bestSleep[k].asleepMs) {
-      bestSleep[k] = { asleepMs, perf: s.score.sleep_performance_percentage };
+      bestSleep[k] = { asleepMs, s };
     }
   }
+  const H = 3600000;
   for (const k in bestSleep) {
-    at(k).sleepH = +(bestSleep[k].asleepMs / 3600000).toFixed(2);
-    if (bestSleep[k].perf !== undefined && bestSleep[k].perf !== null) at(k).sleepPerf = Math.round(bestSleep[k].perf);
+    const { asleepMs, s } = bestSleep[k];
+    const st = s.score.stage_summary || {};
+    const need = s.score.sleep_needed;
+    put(k, 'sleepH', asleepMs / H, 2);
+    put(k, 'remH', st.total_rem_sleep_time_milli / H, 2);
+    put(k, 'deepH', st.total_slow_wave_sleep_time_milli / H, 2);
+    put(k, 'lightH', st.total_light_sleep_time_milli / H, 2);
+    put(k, 'awakeH', st.total_awake_time_milli / H, 2);
+    put(k, 'disturbances', st.disturbance_count);
+    put(k, 'sleepPerf', s.score.sleep_performance_percentage);
+    put(k, 'sleepConsistency', s.score.sleep_consistency_percentage);
+    put(k, 'sleepEfficiency', s.score.sleep_efficiency_percentage, 1);
+    put(k, 'respRate', s.score.respiratory_rate, 1);
+    if (need) {
+      const needMs =
+        (need.baseline_milli || 0) +
+        (need.need_from_sleep_debt_milli || 0) +
+        (need.need_from_recent_strain_milli || 0) +
+        (need.need_from_recent_nap_milli || 0);
+      if (needMs > 0) put(k, 'sleepNeedH', needMs / H, 2);
+    }
   }
 
   for (const r of recoveries) {
-    if (r.score_state !== 'SCORED' || !r.score || r.score.user_calibrating) continue;
+    if (r.score_state !== 'SCORED' || !r.score) continue;
     const k = cycleDay[r.cycle_id];
     if (!k) continue;
-    if (r.score.recovery_score !== undefined) at(k).recovery = Math.round(r.score.recovery_score);
-    if (r.score.hrv_rmssd_milli !== undefined) at(k).hrv = Math.round(r.score.hrv_rmssd_milli);
-    if (r.score.resting_heart_rate !== undefined) at(k).rhr = Math.round(r.score.resting_heart_rate);
+    put(k, 'recovery', r.score.recovery_score);
+    put(k, 'hrv', r.score.hrv_rmssd_milli);
+    put(k, 'rhr', r.score.resting_heart_rate);
+    put(k, 'spo2', r.score.spo2_percentage, 1);
+    put(k, 'skinTemp', r.score.skin_temp_celsius, 1);
   }
 
   return days;
