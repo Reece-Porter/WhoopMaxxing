@@ -28,6 +28,10 @@
       <div class="card">
         <h2 style="margin-top:0">Get your data in</h2>
         <p id="sync-status" class="notice">Auto-sync not detected — <a href="whoop-connect.html">connect your Whoop</a> (browser-only, ~10 minutes) and this page will update itself every 3 hours. Or import manually below.</p>
+        <div class="form-row" style="margin-bottom:10px">
+          <button id="sync-now" class="small primary">↻ Sync now</button>
+          <button id="sync-setup" class="small ghost">Set up one-click sync</button>
+        </div>
         <h3 style="font-size:14px;margin:14px 0 4px">Import Whoop CSV</h3>
         <p class="notice">In the Whoop app: <strong>More → App settings → Data export</strong>. You'll get an email with a zip — upload the <code>physiological_cycles.csv</code> file here. Re-importing updates existing days.</p>
         <input type="file" id="csv-file" accept=".csv,text/csv" aria-label="Whoop CSV file">
@@ -74,6 +78,26 @@
     <h2>How to improve each score</h2>
     <p class="notice" style="margin-top:-6px;margin-bottom:12px">Your latest value for every metric, judged against healthy ranges or your own 14-day average, with the levers that move it. Not medical advice.</p>
     <div id="guide"></div>
+
+    <dialog id="sync-dialog" style="background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:12px;padding:20px;max-width:440px">
+      <form id="sync-form">
+        <h3 style="margin:0 0 6px">One-click sync setup</h3>
+        <p class="notice" style="margin:0 0 12px">The button triggers the <em>Whoop sync</em> GitHub workflow straight from this page. It needs a fine-grained GitHub token that can only run Actions on this repo: GitHub → Settings → Developer settings → <strong>Fine-grained tokens</strong> → Generate new token → Only select repositories → your WhoopMaxxing repo → Repository permissions → <strong>Actions: Read and write</strong> → Generate, then paste it here. The token is stored only in this browser.</p>
+        <label class="field" style="margin-bottom:10px">GitHub token
+          <input type="password" id="sync-token" placeholder="github_pat_…" autocomplete="off" style="width:100%">
+        </label>
+        <label class="field" style="margin-bottom:10px">Repository
+          <input type="text" id="sync-repo" style="width:100%">
+        </label>
+        <label class="field">Branch with the workflows (leave blank to auto-detect)
+          <input type="text" id="sync-branch" placeholder="auto" style="width:100%">
+        </label>
+        <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" id="sync-cancel" class="ghost">Cancel</button>
+          <button type="submit" class="primary">Save</button>
+        </div>
+      </form>
+    </dialog>
   </main>
 
   <script src="assets/js/shifts.js"></script>

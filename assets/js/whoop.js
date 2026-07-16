@@ -446,8 +446,94 @@
       : 'No data stored yet.';
   }
 
+  /* ---------- one-click resync (triggers the GitHub workflow) ---------- */
+  const GH_API = Store.get('ghapi', 'https://api.github.com'); // overridable for testing
+  const getSyncCfg = () => Store.get('ghsync', { token: '', repo: 'Reece-Porter/WhoopMaxxing', branch: '' });
+
+  function syncStatus(text) {
+    document.getElementById('sync-status').textContent = text;
+  }
+
+  /* The workflow file must exist on the ref we dispatch against, so try the
+   * configured branch, then the usual suspects. */
+  async function dispatchSync(cfg) {
+    const branches = [...new Set([cfg.branch, 'main', 'master', 'claude/shift-work-efficiency-site-wijsqv'].filter(Boolean))];
+    let lastErr = '';
+    for (const ref of branches) {
+      const res = await fetch(`${GH_API}/repos/${cfg.repo}/actions/workflows/whoop-sync.yml/dispatches`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${cfg.token}`,
+          accept: 'application/vnd.github+json',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ ref }),
+      });
+      if (res.status === 204) return ref;
+      lastErr = `HTTP ${res.status}`;
+      if (res.status === 401 || res.status === 403) {
+        throw new Error(`${lastErr} — the token was rejected. Re-check it has "Actions: Read and write" on this repo (Set up one-click sync).`);
+      }
+    }
+    throw new Error(`${lastErr} — couldn't find the workflow on any branch. Set the branch explicitly in "Set up one-click sync".`);
+  }
+
+  async function runSyncNow() {
+    const cfg = getSyncCfg();
+    if (!cfg.token) {
+      // No token configured: open the workflow page where Run workflow is one click
+      window.open(`https://github.com/${cfg.repo}/actions/workflows/whoop-sync.yml`, '_blank', 'noopener');
+      syncStatus('Opened the Whoop sync workflow on GitHub — click "Run workflow" there, or use "Set up one-click sync" to trigger it from this button directly.');
+      return;
+    }
+    const btn = document.getElementById('sync-now');
+    btn.disabled = true;
+    try {
+      const prev = Store.get('lastSync', null);
+      const ref = await dispatchSync(cfg);
+      syncStatus(`⏳ Sync started on GitHub (${ref}) — waiting for fresh data…`);
+      for (let i = 0; i < 16; i++) {
+        await new Promise((r) => setTimeout(r, 15000));
+        const updated = await loadRepoWhoopData();
+        if (updated && updated !== prev) {
+          Store.set('lastSync', updated);
+          refresh();
+          syncStatus(`🔄 Auto-synced from the Whoop API — last sync ${new Date(updated).toLocaleString()}.`);
+          return;
+        }
+      }
+      syncStatus('Sync ran on GitHub — new data hasn\'t reached this page yet (hosting can lag a minute or two). Refresh shortly.');
+    } catch (e) {
+      syncStatus('Sync trigger failed: ' + e.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
   /* ---------- wiring ---------- */
   document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('sync-now').addEventListener('click', runSyncNow);
+
+    const syncDialog = document.getElementById('sync-dialog');
+    document.getElementById('sync-setup').addEventListener('click', () => {
+      const cfg = getSyncCfg();
+      document.getElementById('sync-token').value = cfg.token;
+      document.getElementById('sync-repo').value = cfg.repo;
+      document.getElementById('sync-branch').value = cfg.branch;
+      syncDialog.showModal();
+    });
+    document.getElementById('sync-cancel').addEventListener('click', () => syncDialog.close());
+    document.getElementById('sync-form').addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      Store.set('ghsync', {
+        token: document.getElementById('sync-token').value.trim(),
+        repo: document.getElementById('sync-repo').value.trim() || 'Reece-Porter/WhoopMaxxing',
+        branch: document.getElementById('sync-branch').value.trim(),
+      });
+      syncDialog.close();
+      syncStatus('One-click sync configured — the ↻ Sync now button will trigger the workflow directly.');
+    });
+
     document.getElementById('csv-file').addEventListener('change', async (ev) => {
       const file = ev.target.files[0];
       if (!file) return;
@@ -495,10 +581,8 @@
     // Merge in API-synced data if the Whoop-sync workflow is set up
     loadRepoWhoopData().then((updated) => {
       if (!updated) return;
-      const el = document.getElementById('sync-status');
-      if (el) {
-        el.textContent = `🔄 Auto-synced from the Whoop API — last sync ${new Date(updated).toLocaleString()}.`;
-      }
+      Store.set('lastSync', updated);
+      syncStatus(`🔄 Auto-synced from the Whoop API — last sync ${new Date(updated).toLocaleString()}.`);
       refresh();
     });
   });
