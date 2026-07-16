@@ -27,22 +27,34 @@ const envTrim = (k) => (process.env[k] || '').trim();
 const WHOOP_CLIENT_ID = envTrim('WHOOP_CLIENT_ID');
 const WHOOP_CLIENT_SECRET = envTrim('WHOOP_CLIENT_SECRET');
 const WHOOP_TOKEN_KEY = envTrim('WHOOP_TOKEN_KEY');
-if (!WHOOP_CLIENT_ID || !WHOOP_CLIENT_SECRET || !WHOOP_TOKEN_KEY) {
-  console.error('Missing WHOOP_CLIENT_ID / WHOOP_CLIENT_SECRET / WHOOP_TOKEN_KEY.');
-  console.error('Add them in the repo under Settings → Secrets and variables → Actions → "Secrets" tab → "New repository secret" (NOT the Variables tab, and not Environment secrets). Names must match exactly, all caps.');
-  process.exit(1);
+function requireCreds() {
+  if (!WHOOP_CLIENT_ID || !WHOOP_CLIENT_SECRET || !WHOOP_TOKEN_KEY) {
+    console.error('Missing WHOOP_CLIENT_ID / WHOOP_CLIENT_SECRET / WHOOP_TOKEN_KEY.');
+    console.error('Add them in the repo under Settings → Secrets and variables → Actions → "Secrets" tab → "New repository secret" (NOT the Variables tab, and not Environment secrets). Names must match exactly, all caps.');
+    process.exit(1);
+  }
 }
-const KEY = crypto.createHash('sha256').update(WHOOP_TOKEN_KEY).digest();
+
+// Key derivation is lazy so this module can be imported (for mapRecords,
+// fetchAll, tokenRequest) without the GitHub-Actions environment present.
+let KEY = null;
+function getKey() {
+  if (!KEY) {
+    if (!WHOOP_TOKEN_KEY) throw new Error('WHOOP_TOKEN_KEY is not set');
+    KEY = crypto.createHash('sha256').update(WHOOP_TOKEN_KEY).digest();
+  }
+  return KEY;
+}
 
 export function encrypt(text) {
   const iv = crypto.randomBytes(12);
-  const c = crypto.createCipheriv('aes-256-gcm', KEY, iv);
+  const c = crypto.createCipheriv('aes-256-gcm', getKey(), iv);
   const enc = Buffer.concat([c.update(text, 'utf8'), c.final()]);
   return [iv, c.getAuthTag(), enc].map((b) => b.toString('base64')).join('.');
 }
 function decrypt(blob) {
   const [iv, tag, enc] = blob.trim().split('.').map((s) => Buffer.from(s, 'base64'));
-  const d = crypto.createDecipheriv('aes-256-gcm', KEY, iv);
+  const d = crypto.createDecipheriv('aes-256-gcm', getKey(), iv);
   d.setAuthTag(tag);
   return Buffer.concat([d.update(enc), d.final()]).toString('utf8');
 }
@@ -98,12 +110,13 @@ async function refreshAccessToken(refreshToken) {
   return tok;
 }
 
-async function fetchAll(accessToken, path) {
-  const start = new Date(Date.now() - DAYS * 86400000).toISOString();
+export async function fetchAll(accessToken, path, opts = {}) {
+  const base = opts.base || BASE;
+  const start = opts.start || new Date(Date.now() - DAYS * 86400000).toISOString();
   const records = [];
   let nextToken;
   do {
-    const u = new URL(BASE + path);
+    const u = new URL(base + path);
     u.searchParams.set('start', start);
     u.searchParams.set('limit', '25');
     if (nextToken) u.searchParams.set('nextToken', nextToken);
@@ -205,6 +218,7 @@ export function mapRecords({ cycles, sleeps, recoveries }) {
 }
 
 async function main() {
+  requireCreds();
   const tok = await refreshAccessToken(loadRefreshToken());
 
   fs.mkdirSync('data', { recursive: true });

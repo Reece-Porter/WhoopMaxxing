@@ -26,6 +26,32 @@ To change the pattern, start date or shift times, edit the `ROTA` object at the 
 - Meal sections **adapt to that day's shift** (e.g. nights get *Pre-shift / Midnight / Post-shift / Snacks*).
 - Adjustable gram portions, per-meal and per-day macro totals, progress bars against your daily calorie/protein/carb/fat targets, and a favourites list for foods you use often.
 
+## Local-first sync (everything stays on your machine)
+
+For NHS-style data handling — no third-party storage, tokens and health data never leave your computer — use the local CLI instead of (or alongside) the GitHub Actions sync. Needs [Node.js](https://nodejs.org) 18+.
+
+```sh
+node scripts/whoop-local.mjs auth     # one-time browser login (asks for client ID + secret once)
+node scripts/whoop-local.mjs sync     # backfills your full history on first run, incremental after
+node scripts/whoop-local.mjs status   # what's stored locally
+```
+
+Before the first `auth`, make sure your app on developer.whoop.com has **all** of these scopes enabled: `read:recovery read:sleep read:cycles read:workout read:profile read:body_measurement offline` (the local CLI also pulls per-workout data, which the Actions sync doesn't).
+
+Storage layout (two layers, flat JSON — trivially greppable, and a clean upgrade path to SQLite later by importing the raw archive):
+
+| Path | Contents | Committed? |
+|---|---|---|
+| `data/local/config.json`, `tokens.json`, `state.json` | client credentials, rotating refresh token (auto-refreshed on every sync — no re-authenticating), sync watermark | never (gitignored, chmod 600) |
+| `data/raw/{cycles,sleeps,recoveries,workouts}.json` | every API record untouched, keyed by id — dedupes on incremental syncs, re-scored records overwrite | never (gitignored) |
+| `data/raw/{profile,body}.json` | profile + body measurements | never (gitignored) |
+| `data/whoop.json` | derived per-day metrics — what the site reads | your choice |
+| `data/workouts.json` | derived per-workout rows: sport, duration, strain, avg/max HR, HR-zone minutes, kcal, distance | your choice |
+
+Incremental syncs re-fetch a 7-day overlap window so late-scored sleeps/recoveries get corrected. To view the site with local data: `python3 -m http.server 8000` → `http://localhost:8000`. Run `sync` daily (or add a cron/Task Scheduler entry on your machine).
+
+Note: the GitHub Actions sync (below) commits `data/whoop.json` and an encrypted token to the repo — convenient for phone access, but your stats live in GitHub. Pick the mode that matches your comfort level; both write the same `data/whoop.json` the site reads. If you go fully local, disable the *Whoop sync* workflow (Actions → Whoop sync → ⋯ → Disable workflow).
+
 ## Whoop API auto-sync setup (one-time, ~10 minutes)
 
 Whoop's API uses OAuth with a client secret and blocks direct browser calls, so a static page can't talk to it directly. Instead, the included GitHub Action (`.github/workflows/whoop-sync.yml`) syncs for you on GitHub's servers — free, no hosting needed.

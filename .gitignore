@@ -1,0 +1,3 @@
+# Local-first Whoop sync: tokens, config and the raw archive never leave this machine
+data/local/
+data/raw/
