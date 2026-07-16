@@ -61,3 +61,11 @@ function getFavourites() {
 function setFavourites(f) {
   Store.set('favs', f);
 }
+
+/* Batch-cook recipes: [{ id, name, portions, items: [{name, brand, per100, grams}] }] */
+function getBatches() {
+  return Store.get('batches', []);
+}
+function setBatches(b) {
+  Store.set('batches', b);
+}

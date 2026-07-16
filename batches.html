@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ShiftMaxx — Batch cook</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="batches">
+  <header class="top">
+    <div class="wrap">
+      <div class="brand">Shift<span>Maxx</span></div>
+      <nav class="nav">
+        <a href="index.html" data-page="home">Dashboard</a>
+        <a href="rota.html" data-page="rota">Rota</a>
+        <a href="whoop.html" data-page="whoop">Whoop</a>
+        <a href="meals.html" data-page="meals">Meal prep</a>
+        <a href="batches.html" data-page="batches">Batch cook</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1>Batch cook</h1>
+    <p class="sub">Throw a whole batch of ingredients in, split it into portions, and see the macros per portion — then drop portions straight into your meal plan.</p>
+
+    <div class="grid cols-2">
+      <div>
+        <div class="card">
+          <h2 style="margin-top:0">Add ingredients</h2>
+          <p class="notice" style="margin-top:0">Adding to: <select id="target-batch" aria-label="Target batch" style="max-width:220px"></select></p>
+          <form id="search-form" class="form-row">
+            <input id="search-q" type="search" placeholder="e.g. chicken breast, rice…" style="flex:1;min-width:180px" aria-label="Food search">
+            <button class="primary" type="submit">Search</button>
+          </form>
+
+          <h3 style="font-size:14px;margin:16px 0 6px">Barcode</h3>
+          <form id="barcode-form" class="form-row">
+            <input id="barcode-q" type="text" inputmode="numeric" placeholder="Type barcode number…" style="flex:1;min-width:150px" aria-label="Barcode number">
+            <button type="submit">Look up</button>
+            <button type="button" id="scan-start">📷 Scan</button>
+            <button type="button" id="scan-stop" hidden>Stop camera</button>
+          </form>
+          <video id="scanner-video" hidden playsinline muted></video>
+          <p id="scan-msg" class="notice"></p>
+
+          <div id="results"></div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <h2 style="margin-top:0">Favourites</h2>
+          <div id="favourites"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <h2 style="margin-top:0">New batch</h2>
+          <form id="batch-new" class="form-row">
+            <input id="batch-name" type="text" placeholder="e.g. Chicken & rice — Sunday prep" style="flex:1;min-width:200px" aria-label="Batch name">
+            <button class="primary" type="submit">Create</button>
+          </form>
+        </div>
+
+        <div id="batches"></div>
+      </div>
+    </div>
+
+    <dialog id="ing-dialog" style="background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:12px;padding:20px;max-width:360px">
+      <form id="ing-form">
+        <h3 style="margin:0 0 4px">Add ingredient</h3>
+        <p id="ing-name" class="notice" style="margin:0 0 12px"></p>
+        <label class="field">Amount used in the batch (g)
+          <input type="number" id="ing-grams" min="1" value="500" style="width:110px">
+        </label>
+        <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" id="ing-cancel" class="ghost">Cancel</button>
+          <button type="submit" class="primary">Add to batch</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="portion-dialog" style="background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:12px;padding:20px;max-width:380px">
+      <form id="portion-form">
+        <h3 style="margin:0 0 4px">Add portion(s) to meal plan</h3>
+        <p id="portion-batch-name" class="notice" style="margin:0 0 12px"></p>
+        <div class="form-row">
+          <label class="field">Day <input type="date" id="portion-date"></label>
+          <label class="field">Portions <input type="number" id="portion-qty" min="0.25" step="0.25" value="1" style="width:80px"></label>
+        </div>
+        <label class="field" style="margin-top:10px">Meal <select id="portion-section"></select></label>
+        <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
+          <button type="button" id="portion-cancel" class="ghost">Cancel</button>
+          <button type="submit" class="primary">Add to plan</button>
+        </div>
+      </form>
+    </dialog>
+  </main>
+
+  <script src="assets/js/shifts.js"></script>
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/food.js"></script>
+  <script src="assets/js/batches.js"></script>
+</body>
+</html>

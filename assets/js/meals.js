@@ -1,14 +1,9 @@
-/* Meal prep: Open Food Facts search + barcode scan, shift-aware meal sections,
- * macro totals vs daily targets. Data stays in this browser (localStorage).
+/* Meal prep: Open Food Facts search + barcode scan (shared via food.js),
+ * shift-aware meal sections, macro totals vs daily targets, and Whoop-driven
+ * intake recommendations. Data stays in this browser (localStorage).
  * (MyFitnessPal has no public API, so Open Food Facts — the open database that
  * powers many macro apps — is used instead.) */
 (function () {
-  const OFF_FIELDS = 'code,product_name,brands,nutriments,serving_size';
-  const SECTION_LABELS = {
-    N: ['Pre-shift meal', 'Midnight meal', 'Post-shift meal', 'Snacks'],
-    D: ['Breakfast', 'Lunch', 'Post-shift dinner', 'Snacks'],
-    O: ['Breakfast', 'Lunch', 'Dinner', 'Snacks'],
-  };
   const MACROS = [
     ['kcal', 'Calories', 'kcal', 'var(--ink-2)'],
     ['protein', 'Protein', 'g', 'var(--c-blue)'],
@@ -18,144 +13,24 @@
 
   let selectedDate = dateKey(new Date());
   let pendingFood = null; // food chosen from search/scan, awaiting a section
-  let scanStream = null;
-
-  /* ---------- Open Food Facts ---------- */
-  function foodFromProduct(p) {
-    const n = p.nutriments || {};
-    const per100 = {
-      kcal: Math.round(n['energy-kcal_100g'] ?? (n.energy_100g ? n.energy_100g / 4.184 : 0)),
-      protein: +(n.proteins_100g ?? 0).toFixed(1),
-      carbs: +(n.carbohydrates_100g ?? 0).toFixed(1),
-      fat: +(n.fat_100g ?? 0).toFixed(1),
-    };
-    return {
-      name: p.product_name || 'Unnamed product',
-      brand: p.brands ? p.brands.split(',')[0] : '',
-      code: p.code || '',
-      per100,
-    };
-  }
-
-  async function searchByName(q) {
-    const url =
-      'https://world.openfoodfacts.org/cgi/search.pl?action=process&json=1&search_simple=1' +
-      `&page_size=20&fields=${OFF_FIELDS}&search_terms=${encodeURIComponent(q)}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('Search failed (' + res.status + ')');
-    const data = await res.json();
-    return (data.products || []).filter((p) => p.product_name).map(foodFromProduct);
-  }
-
-  async function lookupBarcode(code) {
-    const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(code)}.json?fields=${OFF_FIELDS}`);
-    if (!res.ok) throw new Error('Lookup failed (' + res.status + ')');
-    const data = await res.json();
-    if (data.status !== 1 || !data.product) return null;
-    return foodFromProduct(data.product);
-  }
-
-  /* ---------- barcode scanning (native BarcodeDetector) ---------- */
-  async function startScanner() {
-    const msg = document.getElementById('scan-msg');
-    if (!('BarcodeDetector' in window)) {
-      msg.textContent = 'Camera scanning needs Chrome/Edge/Android. Type the barcode number below instead — it works everywhere.';
-      return;
-    }
-    try {
-      const detector = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'] });
-      scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-      const video = document.getElementById('scanner-video');
-      video.hidden = false;
-      video.srcObject = scanStream;
-      await video.play();
-      msg.textContent = 'Point the camera at the barcode…';
-      document.getElementById('scan-start').hidden = true;
-      document.getElementById('scan-stop').hidden = false;
-
-      const tick = async () => {
-        if (!scanStream) return;
-        try {
-          const codes = await detector.detect(video);
-          if (codes.length) {
-            const value = codes[0].rawValue;
-            stopScanner();
-            msg.textContent = `Found barcode ${value} — looking it up…`;
-            await handleBarcode(value);
-            return;
-          }
-        } catch { /* frame not ready yet */ }
-        setTimeout(tick, 250);
-      };
-      tick();
-    } catch (e) {
-      msg.textContent = 'Could not open the camera (' + e.message + '). Type the barcode number below instead.';
-    }
-  }
-
-  function stopScanner() {
-    if (scanStream) {
-      scanStream.getTracks().forEach((t) => t.stop());
-      scanStream = null;
-    }
-    document.getElementById('scanner-video').hidden = true;
-    document.getElementById('scan-start').hidden = false;
-    document.getElementById('scan-stop').hidden = true;
-  }
 
   async function handleBarcode(code) {
     const msg = document.getElementById('scan-msg');
     try {
-      const food = await lookupBarcode(code);
+      const food = await Food.lookupBarcode(code);
       if (!food) {
         msg.textContent = `Barcode ${code} isn't in Open Food Facts. Try a name search instead.`;
         return;
       }
       msg.textContent = '';
-      showResults([food]);
+      Food.renderResults(document.getElementById('results'), [food], { onAdd: beginAdd, onFavChange: renderFavs });
     } catch (e) {
       msg.textContent = 'Lookup error: ' + e.message;
     }
   }
 
-  /* ---------- search results & adding ---------- */
-  function macroLine(per100) {
-    return `${per100.kcal} kcal · P ${per100.protein} · C ${per100.carbs} · F ${per100.fat} /100g`;
-  }
-
-  function showResults(foods) {
-    const wrap = document.getElementById('results');
-    wrap.innerHTML = '';
-    if (!foods.length) {
-      wrap.innerHTML = '<p class="notice">No results found.</p>';
-      return;
-    }
-    for (const food of foods) {
-      const row = document.createElement('div');
-      row.className = 'search-result';
-      row.innerHTML =
-        `<div class="name">${escapeHtml(food.name)}${food.brand ? ` <span class="notice">· ${escapeHtml(food.brand)}</span>` : ''}` +
-        `<div class="per">${macroLine(food.per100)}</div></div>`;
-      const favBtn = document.createElement('button');
-      favBtn.className = 'small ghost';
-      favBtn.textContent = '☆ Save';
-      favBtn.title = 'Save to favourites';
-      favBtn.addEventListener('click', () => {
-        const favs = getFavourites();
-        if (!favs.some((f) => f.code === food.code && f.name === food.name)) {
-          favs.push(food);
-          setFavourites(favs);
-          renderFavourites();
-        }
-        favBtn.textContent = '★ Saved';
-      });
-      const addBtn = document.createElement('button');
-      addBtn.className = 'small primary';
-      addBtn.textContent = 'Add';
-      addBtn.addEventListener('click', () => beginAdd(food));
-      row.append(favBtn, addBtn);
-      wrap.appendChild(row);
-    }
+  function renderFavs() {
+    Food.renderFavourites(document.getElementById('favourites'), { onAdd: beginAdd, onFavChange: renderFavs });
   }
 
   function beginAdd(food) {
@@ -164,14 +39,16 @@
     document.getElementById('add-food-name').textContent = food.name + (food.brand ? ` (${food.brand})` : '');
     document.getElementById('add-grams').value = 100;
     const sel = document.getElementById('add-section');
-    const labels = SECTION_LABELS[shiftFor(parseKey(selectedDate)).code];
+    const labels = Food.SECTION_LABELS[shiftFor(parseKey(selectedDate)).code];
     sel.innerHTML = labels.map((l, i) => `<option value="${i}">${l}</option>`).join('');
     dlg.showModal();
   }
 
   /* ---------- plan rendering ---------- */
+  /* Items are per-100g by default; batch portions use unit:'portion' where
+   * per100 holds per-portion macros and grams holds the number of portions. */
   function itemMacros(item) {
-    const f = item.grams / 100;
+    const f = item.unit === 'portion' ? item.grams : item.grams / 100;
     return {
       kcal: Math.round(item.per100.kcal * f),
       protein: +(item.per100.protein * f).toFixed(1),
@@ -198,7 +75,7 @@
       `<span class="chip"><span class="dot" style="background:${shift.code === 'N' ? 'var(--shift-night)' : shift.code === 'D' ? 'var(--shift-day)' : 'var(--muted)'}"></span>` +
       `${shift.label}${shift.times ? ` ${shift.times.start}–${shift.times.end}` : ''}</span>`;
 
-    const labels = SECTION_LABELS[shift.code];
+    const labels = Food.SECTION_LABELS[shift.code];
     const plan = getDayPlan();
     const wrap = document.getElementById('meal-sections');
     wrap.innerHTML = '';
@@ -214,25 +91,27 @@
         const m = itemMacros(item);
         secKcal += m.kcal;
         for (const k in totals) totals[k] += m[k];
+        const isPortion = item.unit === 'portion';
         const row = document.createElement('div');
         row.className = 'meal-item';
         row.innerHTML =
-          `<div class="name">${escapeHtml(item.name)}${item.brand ? `<span class="brand"> · ${escapeHtml(item.brand)}</span>` : ''}</div>` +
+          `<div class="name">${Food.escapeHtml(item.name)}${item.brand ? `<span class="brand"> · ${Food.escapeHtml(item.brand)}</span>` : ''}</div>` +
           `<span class="macros">${m.kcal} kcal · P ${m.protein}g · C ${m.carbs}g · F ${m.fat}g</span>`;
-        const grams = document.createElement('input');
-        grams.type = 'number';
-        grams.className = 'grams';
-        grams.value = item.grams;
-        grams.min = 1;
-        grams.setAttribute('aria-label', 'grams');
-        grams.addEventListener('change', () => {
-          item.grams = Math.max(1, +grams.value || 100);
+        const amount = document.createElement('input');
+        amount.type = 'number';
+        amount.className = 'grams';
+        amount.value = item.grams;
+        amount.min = isPortion ? 0.25 : 1;
+        amount.step = isPortion ? 0.25 : 1;
+        amount.setAttribute('aria-label', isPortion ? 'portions' : 'grams');
+        amount.addEventListener('change', () => {
+          item.grams = Math.max(isPortion ? 0.25 : 1, +amount.value || (isPortion ? 1 : 100));
           saveDayPlan(plan);
           renderPlan();
         });
         const g = document.createElement('span');
         g.className = 'notice';
-        g.textContent = 'g';
+        g.textContent = isPortion ? (item.grams === 1 ? 'portion' : 'portions') : 'g';
         const del = document.createElement('button');
         del.className = 'small ghost';
         del.textContent = '✕';
@@ -242,7 +121,7 @@
           saveDayPlan(plan);
           renderPlan();
         });
-        row.append(grams, g, del);
+        row.append(amount, g, del);
         list.appendChild(row);
       });
       const h = document.createElement('h3');
@@ -275,40 +154,6 @@
         `<div class="progress"><div style="width:${pct}%;background:${color}"></div></div>`;
       wrap.appendChild(row);
     }
-  }
-
-  function renderFavourites() {
-    const favs = getFavourites();
-    const wrap = document.getElementById('favourites');
-    wrap.innerHTML = '';
-    if (!favs.length) {
-      wrap.innerHTML = '<p class="notice">Foods you star from search results appear here for quick re-adding.</p>';
-      return;
-    }
-    favs.forEach((food, i) => {
-      const row = document.createElement('div');
-      row.className = 'search-result';
-      row.innerHTML = `<div class="name">${escapeHtml(food.name)}${food.brand ? ` <span class="notice">· ${escapeHtml(food.brand)}</span>` : ''}<div class="per">${macroLine(food.per100)}</div></div>`;
-      const rm = document.createElement('button');
-      rm.className = 'small ghost';
-      rm.textContent = '✕';
-      rm.setAttribute('aria-label', 'remove favourite');
-      rm.addEventListener('click', () => {
-        favs.splice(i, 1);
-        setFavourites(favs);
-        renderFavourites();
-      });
-      const addBtn = document.createElement('button');
-      addBtn.className = 'small primary';
-      addBtn.textContent = 'Add';
-      addBtn.addEventListener('click', () => beginAdd(food));
-      row.append(rm, addBtn);
-      wrap.appendChild(row);
-    });
-  }
-
-  function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
   /* ---------- recommended intake from Whoop burn + body stats ---------- */
@@ -432,9 +277,9 @@
       const wrap = document.getElementById('results');
       wrap.innerHTML = '<p class="notice">Searching Open Food Facts…</p>';
       try {
-        showResults(await searchByName(q));
+        Food.renderResults(wrap, await Food.searchByName(q), { onAdd: beginAdd, onFavChange: renderFavs });
       } catch (e) {
-        wrap.innerHTML = `<p class="error-text">Search error: ${escapeHtml(e.message)}. Check your connection and try again.</p>`;
+        wrap.innerHTML = `<p class="error-text">Search error: ${Food.escapeHtml(e.message)}. Check your connection and try again.</p>`;
       }
     });
 
@@ -444,9 +289,9 @@
       if (code) handleBarcode(code);
     });
 
-    document.getElementById('scan-start').addEventListener('click', startScanner);
-    document.getElementById('scan-stop').addEventListener('click', stopScanner);
-    window.addEventListener('pagehide', stopScanner);
+    document.getElementById('scan-start').addEventListener('click', () => Food.startScanner(handleBarcode));
+    document.getElementById('scan-stop').addEventListener('click', Food.stopScanner);
+    window.addEventListener('pagehide', Food.stopScanner);
 
     document.getElementById('add-form').addEventListener('submit', (ev) => {
       ev.preventDefault();
@@ -474,7 +319,7 @@
       renderPlan();
     });
 
-    renderFavourites();
+    renderFavs();
     renderPlan();
     initBodyForm();
     renderIntake();

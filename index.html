@@ -16,6 +16,7 @@
         <a href="rota.html" data-page="rota">Rota</a>
         <a href="whoop.html" data-page="whoop">Whoop</a>
         <a href="meals.html" data-page="meals">Meal prep</a>
+        <a href="batches.html" data-page="batches">Batch cook</a>
       </nav>
     </div>
   </header>
@@ -87,7 +88,7 @@
       const plans = getMealPlans();
       const plan = plans[dateKey(now)];
       let kcal = 0;
-      if (plan) for (const s in plan.sections) for (const it of plan.sections[s]) kcal += Math.round(it.per100.kcal * it.grams / 100);
+      if (plan) for (const s in plan.sections) for (const it of plan.sections[s]) kcal += Math.round(it.per100.kcal * (it.unit === 'portion' ? it.grams : it.grams / 100));
       const targets = getTargets();
       const mealTile = document.createElement('div');
       mealTile.className = 'card tile';
