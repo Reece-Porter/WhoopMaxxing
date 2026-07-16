@@ -311,6 +311,109 @@
     return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
+  /* ---------- recommended intake from Whoop burn + body stats ---------- */
+  function getBody() {
+    return Store.get('body', { weightKg: 72, heightCm: 176.5, age: 25, sex: 'male', goal: 'maintain' });
+  }
+
+  /* Average measured Whoop burn over the most recent days that have it. */
+  function whoopBurn() {
+    const data = getWhoopData();
+    const vals = Object.keys(data)
+      .sort()
+      .map((k) => data[k].calories)
+      .filter((v) => v !== undefined)
+      .slice(-7);
+    if (vals.length < 2) return null;
+    return { kcal: Math.round(vals.reduce((a, b) => a + b, 0) / vals.length), days: vals.length };
+  }
+
+  function latestRecovery() {
+    const data = getWhoopData();
+    const keys = Object.keys(data).sort();
+    for (let i = keys.length - 1; i >= 0; i--) {
+      if (data[keys[i]].recovery !== undefined) return data[keys[i]].recovery;
+    }
+    return null;
+  }
+
+  function computeIntake() {
+    const b = getBody();
+    const burn = whoopBurn();
+    // Mifflin-St Jeor estimate, ~1.5 activity factor for an on-your-feet shift job
+    const bmr = 10 * b.weightKg + 6.25 * b.heightCm - 5 * b.age + (b.sex === 'male' ? 5 : -161);
+    const estimate = Math.round(bmr * 1.5);
+    let kcalBase, basis;
+    if (burn && burn.kcal >= bmr) {
+      kcalBase = burn.kcal;
+      basis = `your average Whoop burn over the last ${burn.days} days (${burn.kcal} kcal)`;
+    } else if (burn) {
+      // measured average below BMR = partial days (new strap / not worn all day)
+      kcalBase = estimate;
+      basis = `an estimate from your height/weight/age — your Whoop burn average (${burn.kcal} kcal) looks like partial days, so it's ignored until a full week of wear`;
+    } else {
+      kcalBase = estimate;
+      basis = `an estimate from your height/weight/age (no Whoop calorie data yet — sync to switch to measured burn)`;
+    }
+    const adj = b.goal === 'lose' ? -400 : b.goal === 'gain' ? 300 : 0;
+    const kcal = kcalBase + adj;
+    const protein = Math.round((b.goal === 'lose' ? 2.0 : 1.8) * b.weightKg);
+    const fat = Math.round(0.9 * b.weightKg);
+    const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
+    return { kcal, protein, carbs, fat, basis, goal: b.goal };
+  }
+
+  function renderIntake() {
+    const wrap = document.getElementById('intake');
+    const r = computeIntake();
+    const goalWord = { maintain: 'maintain weight', lose: 'lose fat (−400 kcal/day)', gain: 'build muscle (+300 kcal/day)' }[r.goal];
+
+    let tip = '';
+    const shift = shiftFor(new Date());
+    const rec = latestRecovery();
+    if (shift.code === 'N') tip = 'Night shift today: eat your biggest meal pre-shift, keep midnight food light, and hit the protein target across the whole 24 h.';
+    else if (rec !== null && rec < 34) tip = 'Recovery is red: hold calories at target, lean into protein and carbs, and skip the deficit today if you\'re cutting — recovery comes first.';
+    else if (shift.code === 'D') tip = 'Day shift: front-load breakfast and pack the post-shift dinner — the target is easiest to hit when it\'s prepped.';
+
+    wrap.innerHTML =
+      `<div class="grid cols-4" style="margin-bottom:10px">` +
+      [['Calories', r.kcal, 'kcal'], ['Protein', r.protein, 'g'], ['Carbs', r.carbs, 'g'], ['Fat', r.fat, 'g']]
+        .map(([l, v, u]) => `<div class="tile"><div class="label">${l}</div><div class="value" style="font-size:22px">${v}<small> ${u}</small></div></div>`)
+        .join('') +
+      `</div>` +
+      `<p class="notice" style="margin:0 0 10px">Based on ${r.basis}, protein at ${r.goal === 'lose' ? 2.0 : 1.8} g/kg and fat at 0.9 g/kg for your ${getBody().weightKg} kg, set to ${goalWord}.` +
+      (tip ? ` ${tip}` : '') + `</p>`;
+
+    const apply = document.createElement('button');
+    apply.className = 'small primary';
+    apply.textContent = 'Use as my daily targets';
+    apply.addEventListener('click', () => {
+      setTargets({ kcal: r.kcal, protein: r.protein, carbs: r.carbs, fat: r.fat });
+      const tform = document.getElementById('targets-form');
+      for (const [key] of MACROS) tform[key].value = getTargets()[key];
+      renderPlan();
+      apply.textContent = '✓ Applied';
+      setTimeout(() => { apply.textContent = 'Use as my daily targets'; }, 2000);
+    });
+    wrap.appendChild(apply);
+  }
+
+  function initBodyForm() {
+    const form = document.getElementById('body-form');
+    const b = getBody();
+    for (const f of ['weightKg', 'heightCm', 'age', 'sex', 'goal']) form[f].value = b[f];
+    form.addEventListener('change', () => {
+      Store.set('body', {
+        weightKg: +form.weightKg.value || 72,
+        heightCm: +form.heightCm.value || 176.5,
+        age: +form.age.value || 25,
+        sex: form.sex.value,
+        goal: form.goal.value,
+      });
+      renderIntake();
+    });
+  }
+
   /* ---------- wiring ---------- */
   document.addEventListener('DOMContentLoaded', () => {
     const dateInput = document.getElementById('plan-date');
@@ -373,5 +476,8 @@
 
     renderFavourites();
     renderPlan();
+    initBodyForm();
+    renderIntake();
+    loadRepoWhoopData().then((updated) => { if (updated) renderIntake(); });
   });
 })();

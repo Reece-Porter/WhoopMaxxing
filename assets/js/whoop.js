@@ -550,23 +550,6 @@
       refresh();
     });
 
-    const form = document.getElementById('manual-form');
-    form.date.value = dateKey(new Date());
-    form.addEventListener('submit', (ev) => {
-      ev.preventDefault();
-      const data = getWhoopData();
-      const rec = {};
-      for (const f of ['recovery', 'hrv', 'rhr', 'sleepH', 'sleepPerf', 'strain']) {
-        if (form[f].value !== '') rec[f] = +form[f].value;
-      }
-      if (!form.date.value || Object.keys(rec).length === 0) return;
-      data[form.date.value] = { ...(data[form.date.value] || {}), ...rec };
-      setWhoopData(data);
-      form.reset();
-      form.date.value = dateKey(new Date());
-      refresh();
-    });
-
     document.getElementById('range').addEventListener('change', refresh);
 
     document.getElementById('clear-data').addEventListener('click', () => {

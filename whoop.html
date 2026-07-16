@@ -22,9 +22,9 @@
 
   <main class="wrap">
     <h1>Whoop data</h1>
-    <p class="sub" id="latest-date">Import your Whoop export or log days manually — everything is stored privately in this browser.</p>
+    <p class="sub" id="latest-date">Auto-synced from the Whoop API, or import the Whoop export — everything is stored privately in this browser.</p>
 
-    <div class="grid cols-2">
+    <div>
       <div class="card">
         <h2 style="margin-top:0">Get your data in</h2>
         <p id="sync-status" class="notice">Auto-sync not detected — <a href="whoop-connect.html">connect your Whoop</a> (browser-only, ~10 minutes) and this page will update itself every 3 hours. Or import manually below.</p>
@@ -40,23 +40,6 @@
         <button id="clear-data" class="small ghost">Clear all stored data</button>
       </div>
 
-      <div class="card">
-        <h2 style="margin-top:0">Manual entry</h2>
-        <form id="manual-form">
-          <div class="form-row">
-            <label class="field">Date <input type="date" name="date" required></label>
-            <label class="field">Recovery % <input type="number" name="recovery" min="0" max="100" step="1"></label>
-            <label class="field">HRV (ms) <input type="number" name="hrv" min="0" step="1"></label>
-          </div>
-          <div class="form-row" style="margin-top:10px">
-            <label class="field">Resting HR (bpm) <input type="number" name="rhr" min="0" step="1"></label>
-            <label class="field">Sleep (hours) <input type="number" name="sleepH" min="0" max="24" step="0.1"></label>
-            <label class="field">Sleep perf % <input type="number" name="sleepPerf" min="0" max="100" step="1"></label>
-            <label class="field">Day strain <input type="number" name="strain" min="0" max="21" step="0.1"></label>
-          </div>
-          <div style="margin-top:12px"><button class="primary" type="submit">Save day</button></div>
-        </form>
-      </div>
     </div>
 
     <h2>Today</h2>

@@ -52,6 +52,27 @@
         </div>
 
         <div class="card" style="margin-top:12px">
+          <h2 style="margin-top:0">Recommended intake</h2>
+          <p class="notice" style="margin-top:0">Built from your Whoop calorie burn, body stats and goal. Not medical advice.</p>
+          <div id="intake"></div>
+          <form id="body-form" class="form-row" style="margin-top:12px">
+            <label class="field">Weight kg <input type="number" name="weightKg" min="30" max="250" step="0.5" style="width:80px"></label>
+            <label class="field">Height cm <input type="number" name="heightCm" min="120" max="230" step="0.5" style="width:80px"></label>
+            <label class="field">Age <input type="number" name="age" min="16" max="100" style="width:64px"></label>
+            <label class="field">Sex (for estimate)
+              <select name="sex"><option value="male">Male</option><option value="female">Female</option></select>
+            </label>
+            <label class="field">Goal
+              <select name="goal">
+                <option value="maintain">Maintain</option>
+                <option value="lose">Lose fat</option>
+                <option value="gain">Build muscle</option>
+              </select>
+            </label>
+          </form>
+        </div>
+
+        <div class="card" style="margin-top:12px">
           <h2 style="margin-top:0">Daily targets</h2>
           <form id="targets-form" class="form-row">
             <label class="field">Calories <input type="number" name="kcal" min="0" style="width:90px"></label>
