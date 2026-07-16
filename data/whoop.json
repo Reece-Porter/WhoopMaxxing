@@ -1,29 +1,107 @@
 {
- "updated": "2026-07-16T03:37:19.567Z",
+ "updated": "2026-07-16T07:49:29.917Z",
  "source": "whoop-api",
  "days": {
+  "2026-07-15": {
+   "strain": 0.1,
+   "calories": 712,
+   "avgHR": 50,
+   "maxHR": 94,
+   "sleepH": 9.08,
+   "remH": 1.7,
+   "deepH": 1.84,
+   "lightH": 5.53,
+   "awakeH": 0.48,
+   "disturbances": 11,
+   "sleepPerf": 94,
+   "sleepConsistency": 83,
+   "sleepEfficiency": 94.9,
+   "respRate": 14.1,
+   "sleepNeedH": 8.1,
+   "recovery": 76,
+   "hrv": 89,
+   "rhr": 49,
+   "spo2": 95.7,
+   "skinTemp": 31.4
+  },
   "2026-07-14": {
    "strain": 6.1,
+   "calories": 1902,
+   "avgHR": 62,
+   "maxHR": 119,
    "sleepH": 7.75,
-   "sleepPerf": 92
+   "remH": 1.71,
+   "deepH": 2.02,
+   "lightH": 4.02,
+   "awakeH": 0.67,
+   "disturbances": 14,
+   "sleepPerf": 92,
+   "sleepConsistency": 0,
+   "sleepEfficiency": 92.4,
+   "respRate": 14,
+   "sleepNeedH": 8.2,
+   "recovery": 79,
+   "hrv": 93,
+   "rhr": 48,
+   "spo2": 94.5,
+   "skinTemp": 31.7
   },
   "2026-07-13": {
    "strain": 5.3,
+   "calories": 1718,
+   "avgHR": 60,
+   "maxHR": 116,
    "sleepH": 8.13,
-   "sleepPerf": 95
+   "remH": 1.67,
+   "deepH": 1.8,
+   "lightH": 4.66,
+   "awakeH": 0.21,
+   "disturbances": 10,
+   "sleepPerf": 95,
+   "sleepConsistency": 0,
+   "sleepEfficiency": 97.5,
+   "respRate": 13.9,
+   "sleepNeedH": 8.49,
+   "recovery": 78,
+   "hrv": 94,
+   "rhr": 51,
+   "spo2": 96.4,
+   "skinTemp": 32
   },
   "2026-07-12": {
-   "strain": 10.2
+   "strain": 10.2,
+   "calories": 2131,
+   "avgHR": 67,
+   "maxHR": 162,
+   "recovery": 78,
+   "hrv": 94,
+   "rhr": 49,
+   "spo2": 95.2,
+   "skinTemp": 32.8
   },
   "2026-07-11": {
-   "strain": 5.6
+   "strain": 5.6,
+   "calories": 700,
+   "avgHR": 75,
+   "maxHR": 132
   },
   "2026-07-08": {
-   "strain": 0
+   "strain": 0,
+   "avgHR": 0,
+   "maxHR": 0
   },
-  "2026-07-15": {
-   "sleepH": 9.08,
-   "sleepPerf": 94
+  "2026-07-16": {
+   "sleepH": 8.35,
+   "remH": 1.92,
+   "deepH": 2.04,
+   "lightH": 4.39,
+   "awakeH": 0.33,
+   "disturbances": 6,
+   "sleepPerf": 100,
+   "sleepConsistency": 90,
+   "sleepEfficiency": 96.3,
+   "respRate": 14.6,
+   "sleepNeedH": 7.88
   }
  }
 }
