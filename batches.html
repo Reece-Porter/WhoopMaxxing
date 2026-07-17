@@ -3,23 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ShiftMaxx — Batch cook</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <title>Batch cook · ShiftMaxx</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23171512'/><path d='M17.5 3 7 17h5.5L11 29 22 14h-5.5L17.5 3z' fill='%23d9a441'/></svg>">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body data-page="batches">
-  <header class="top">
-    <div class="wrap">
-      <div class="brand">Shift<span>Maxx</span></div>
-      <nav class="nav">
-        <a href="index.html" data-page="home">Dashboard</a>
-        <a href="rota.html" data-page="rota">Rota</a>
-        <a href="whoop.html" data-page="whoop">Whoop</a>
-        <a href="meals.html" data-page="meals">Meal prep</a>
-        <a href="batches.html" data-page="batches">Batch cook</a>
-      </nav>
-    </div>
-  </header>
+  <header class="top" id="app-header"></header>
+  <div class="today-strip" id="today-strip"></div>
 
   <main class="wrap">
     <h1>Batch cook</h1>
@@ -39,7 +29,7 @@
           <form id="barcode-form" class="form-row">
             <input id="barcode-q" type="text" inputmode="numeric" placeholder="Type barcode number…" style="flex:1;min-width:150px" aria-label="Barcode number">
             <button type="submit">Look up</button>
-            <button type="button" id="scan-start">📷 Scan</button>
+            <button type="button" id="scan-start"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>Scan</button>
             <button type="button" id="scan-stop" hidden>Stop camera</button>
           </form>
           <video id="scanner-video" hidden playsinline muted></video>
@@ -61,6 +51,7 @@
             <input id="batch-name" type="text" placeholder="e.g. Chicken & rice — Sunday prep" style="flex:1;min-width:200px" aria-label="Batch name">
             <button class="primary" type="submit">Create</button>
           </form>
+          <p id="batch-hint" class="notice" style="margin:10px 0 0"></p>
         </div>
 
         <div id="batches"></div>
@@ -100,6 +91,7 @@
 
   <script src="assets/js/shifts.js"></script>
   <script src="assets/js/store.js"></script>
+  <script src="assets/js/ui.js"></script>
   <script src="assets/js/food.js"></script>
   <script src="assets/js/batches.js"></script>
 </body>

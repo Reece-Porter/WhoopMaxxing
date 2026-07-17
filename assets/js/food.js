@@ -117,7 +117,7 @@ const Food = (() => {
         `<div class="per">${macroLine(food.per100)}</div></div>`;
       const favBtn = document.createElement('button');
       favBtn.className = 'small ghost';
-      favBtn.textContent = '☆ Save';
+      favBtn.innerHTML = SM.icon('plus') + 'Save';
       favBtn.title = 'Save to favourites';
       favBtn.addEventListener('click', () => {
         const favs = getFavourites();
@@ -126,7 +126,7 @@ const Food = (() => {
           setFavourites(favs);
           if (onFavChange) onFavChange();
         }
-        favBtn.textContent = '★ Saved';
+        favBtn.innerHTML = SM.icon('check') + 'Saved';
       });
       const addBtn = document.createElement('button');
       addBtn.className = 'small primary';

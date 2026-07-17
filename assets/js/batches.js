@@ -213,11 +213,25 @@
 
   /* ---------- wiring ---------- */
   document.addEventListener('DOMContentLoaded', () => {
+    // Suggest the portion count from the next working block on the rota
+    const nextBlock = upcomingShifts(new Date(), 20).find((u) => u.code !== 'O' && u.run === 1)
+      || upcomingShifts(new Date(), 1).find((u) => u.code !== 'O');
+    const todayShift = shiftFor(new Date());
+    const block = todayShift.code !== 'O' ? todayShift : nextBlock;
+    const blockLen = block ? block.runLength : 4;
+    const blockWord = block ? (block.code === 'N' ? 'nights' : 'days') : 'shifts';
+    const hint = byId('batch-hint');
+    if (hint) {
+      hint.innerHTML = `${SM.icon('calendar')} Your ${todayShift.code !== 'O' ? 'current' : 'next'} block is <b>${blockLen} ${blockWord}</b>` +
+        (block && todayShift.code === 'O' ? ` starting ${block.date.toLocaleDateString(undefined, { weekday: 'long' })}` : '') +
+        ` — <b>${blockLen} portions</b> covers one meal per shift, ${blockLen * 2} covers two.`;
+    }
+
     byId('batch-new').addEventListener('submit', (ev) => {
       ev.preventDefault();
       const name = byId('batch-name').value.trim();
       if (!name) return;
-      const batch = { id: Date.now(), name, portions: 4, items: [] };
+      const batch = { id: Date.now(), name, portions: blockLen, items: [] };
       batches.push(batch);
       byId('batch-name').value = '';
       save();

@@ -2,45 +2,51 @@
  * every metric Whoop exposes, and per-metric improvement guidance.
  * All data stays in this browser (localStorage). */
 (function () {
-  /* Every per-day metric, grouped as on the page. dp = decimals for display. */
+  /* Every per-day metric in four categories. Each category owns ONE identity
+   * colour, used for all of its charts here and everywhere else in the app. */
   const GROUPS = [
     {
-      title: 'Recovery',
+      key: 'recovery', title: 'Recovery', icon: 'activity', color: 'var(--m-recovery)',
       metrics: [
-        { key: 'recovery', label: 'Recovery', unit: '%', color: 'var(--c-blue)', min: 0, max: 100 },
-        { key: 'hrv', label: 'HRV', unit: 'ms', color: 'var(--c-aqua)' },
-        { key: 'rhr', label: 'Resting HR', unit: 'bpm', color: 'var(--c-magenta)' },
-        { key: 'spo2', label: 'Blood oxygen', unit: '%', color: 'var(--c-violet)' },
-        { key: 'skinTemp', label: 'Skin temp', unit: '°C', color: 'var(--c-yellow)' },
+        { key: 'recovery', label: 'Recovery', unit: '%', min: 0, max: 100 },
+        { key: 'hrv', label: 'HRV', unit: 'ms' },
+        { key: 'rhr', label: 'Resting HR', unit: 'bpm' },
       ],
     },
     {
-      title: 'Sleep',
+      key: 'sleep', title: 'Sleep', icon: 'bed', color: 'var(--m-sleep)',
       metrics: [
-        { key: 'sleepH', label: 'Sleep', unit: 'h', color: 'var(--c-violet)' },
-        { key: 'sleepNeedH', label: 'Sleep need', unit: 'h', color: 'var(--c-blue)' },
-        { key: 'sleepPerf', label: 'Sleep performance', unit: '%', color: 'var(--c-aqua)', min: 0, max: 100 },
-        { key: 'sleepConsistency', label: 'Sleep consistency', unit: '%', color: 'var(--c-magenta)', min: 0, max: 100 },
-        { key: 'sleepEfficiency', label: 'Sleep efficiency', unit: '%', color: 'var(--c-yellow)', min: 0, max: 100 },
-        { key: 'remH', label: 'REM sleep', unit: 'h', color: 'var(--c-blue)' },
-        { key: 'deepH', label: 'Deep (SWS) sleep', unit: 'h', color: 'var(--c-aqua)' },
-        { key: 'lightH', label: 'Light sleep', unit: 'h', color: 'var(--c-magenta)' },
-        { key: 'awakeH', label: 'Awake in bed', unit: 'h', color: 'var(--c-orange)' },
-        { key: 'disturbances', label: 'Disturbances', unit: '', color: 'var(--c-yellow)' },
-        { key: 'respRate', label: 'Respiratory rate', unit: 'rpm', color: 'var(--c-green)' },
+        { key: 'sleepH', label: 'Sleep', unit: 'h' },
+        { key: 'sleepNeedH', label: 'Sleep need', unit: 'h' },
+        { key: 'sleepPerf', label: 'Sleep performance', unit: '%', min: 0, max: 100 },
+        { key: 'sleepConsistency', label: 'Sleep consistency', unit: '%', min: 0, max: 100 },
+        { key: 'sleepEfficiency', label: 'Sleep efficiency', unit: '%', min: 0, max: 100 },
+        { key: 'remH', label: 'REM sleep', unit: 'h' },
+        { key: 'deepH', label: 'Deep (SWS) sleep', unit: 'h' },
+        { key: 'lightH', label: 'Light sleep', unit: 'h' },
+        { key: 'awakeH', label: 'Awake in bed', unit: 'h' },
+        { key: 'disturbances', label: 'Disturbances', unit: '' },
       ],
     },
     {
-      title: 'Strain & output',
+      key: 'strain', title: 'Strain & training', icon: 'flame', color: 'var(--m-strain)',
       metrics: [
-        { key: 'strain', label: 'Day strain', unit: '', color: 'var(--c-yellow)', min: 0, max: 21 },
-        { key: 'calories', label: 'Energy burned', unit: 'kcal', color: 'var(--c-orange)' },
-        { key: 'avgHR', label: 'Average HR', unit: 'bpm', color: 'var(--c-magenta)' },
-        { key: 'maxHR', label: 'Max HR', unit: 'bpm', color: 'var(--c-blue)' },
+        { key: 'strain', label: 'Day strain', unit: '', min: 0, max: 21 },
+        { key: 'calories', label: 'Energy burned', unit: 'kcal' },
+        { key: 'avgHR', label: 'Average HR', unit: 'bpm' },
+        { key: 'maxHR', label: 'Max HR', unit: 'bpm' },
+      ],
+    },
+    {
+      key: 'vitals', title: 'Vitals', icon: 'heart', color: 'var(--m-vitals)',
+      metrics: [
+        { key: 'spo2', label: 'Blood oxygen', unit: '%' },
+        { key: 'skinTemp', label: 'Skin temp', unit: '°C' },
+        { key: 'respRate', label: 'Respiratory rate', unit: 'rpm' },
       ],
     },
   ];
-  const ALL_METRICS = GROUPS.flatMap((g) => g.metrics);
+  const ALL_METRICS = GROUPS.flatMap((g) => g.metrics.map((m) => ({ ...m, color: g.color })));
 
   /* ---------- CSV import ---------- */
   function parseCSV(text) {
@@ -147,9 +153,9 @@
 
   /* ---------- stat tiles ---------- */
   function recoveryStatus(r) {
-    if (r >= 67) return { icon: '✅', word: 'Green — well recovered' };
-    if (r >= 34) return { icon: '⚠️', word: 'Yellow — moderate' };
-    return { icon: '⛔', word: 'Red — run down' };
+    if (r >= 67) return { icon: 'check', word: 'Green — well recovered' };
+    if (r >= 34) return { icon: 'alert', word: 'Yellow — moderate' };
+    return { icon: 'alert', word: 'Red — run down' };
   }
 
   function renderTiles(entries) {
@@ -163,7 +169,7 @@
     const tiles = [];
     if (latest.recovery !== undefined) {
       const st = recoveryStatus(latest.recovery);
-      tiles.push({ label: 'Recovery', value: `${latest.recovery}<small>%</small>`, delta: `${st.icon} ${st.word}` });
+      tiles.push({ label: 'Recovery', value: `${latest.recovery}<small>%</small>`, delta: `${SM.icon(st.icon)} ${st.word}`, accent: 'recovery' });
     }
     for (const [field, dir] of [['hrv', 'up'], ['rhr', 'down']]) {
       if (latest[field] === undefined) continue;
@@ -175,23 +181,81 @@
         delta = `${pct >= 0 ? '▲' : '▼'} ${Math.abs(pct).toFixed(1)}% vs 14-day avg`;
       }
       const m = ALL_METRICS.find((x) => x.key === field);
-      tiles.push({ label: m.label, value: `${latest[field]}<small> ${m.unit}</small>`, delta, cls });
+      tiles.push({ label: m.label, value: `${latest[field]}<small> ${m.unit}</small>`, delta, cls, accent: 'recovery' });
     }
     if (latest.sleepH !== undefined) {
       const h = Math.floor(latest.sleepH);
       const m = Math.round((latest.sleepH - h) * 60);
-      tiles.push({ label: 'Sleep', value: `${h}<small>h</small> ${m}<small>m</small>`, delta: latest.sleepPerf !== undefined ? `${latest.sleepPerf}% sleep performance` : '' });
+      tiles.push({ label: 'Sleep', value: `${h}<small>h</small> ${m}<small>m</small>`, delta: latest.sleepPerf !== undefined ? `${latest.sleepPerf}% sleep performance` : '', accent: 'sleep' });
     }
     if (latest.strain !== undefined) {
-      tiles.push({ label: 'Day strain', value: `${latest.strain}`, delta: 'scale 0–21' });
+      tiles.push({ label: 'Day strain', value: `${latest.strain}`, delta: 'scale 0–21', accent: 'strain' });
     }
 
     for (const t of tiles) {
       const div = document.createElement('div');
-      div.className = 'card tile';
+      div.className = `card tile accent-${t.accent || 'vitals'}`;
       div.innerHTML = `<div class="label">${t.label}</div><div class="value">${t.value}</div><div class="delta ${t.cls || ''}">${t.delta || ''}</div>`;
       wrap.appendChild(div);
     }
+  }
+
+  /* ---------- weekly digest: the last 7 days in plain English ---------- */
+  function avgOf(entries, field, from, to) {
+    const vals = entries.filter((e) => e.key >= from && e.key < to && e[field] !== undefined).map((e) => e[field]);
+    return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+  }
+
+  function renderDigest(entries) {
+    const wrap = document.getElementById('digest');
+    if (!wrap) return;
+    const today = dateKey(new Date());
+    const wk = dateKey(addDays(new Date(), -7));
+    const prev = dateKey(addDays(new Date(), -14));
+    const sentences = [];
+
+    const fmtH = (h) => `${Math.floor(h)}h ${String(Math.round((h - Math.floor(h)) * 60)).padStart(2, '0')}m`;
+    const trend = (now, before, upIsGood, unit = '') => {
+      if (before === null) return '';
+      const d = now - before;
+      if (Math.abs(d) < (unit === '%' ? 2 : 0.15)) return ' — steady on the week before';
+      const dir = d > 0 ? 'up' : 'down';
+      const good = (d > 0) === upIsGood ? 'better than' : 'down on';
+      return unit === 'h' ? ` — ${dir} ${fmtH(Math.abs(d))} on the week before` : ` — ${dir} ${Math.abs(d).toFixed(0)}${unit}, ${good} the week before`;
+    };
+
+    const rec = avgOf(entries, 'recovery', wk, today), recPrev = avgOf(entries, 'recovery', prev, wk);
+    if (rec !== null) sentences.push(`Recovery averaged <b style="color:var(--m-recovery)">${Math.round(rec)}%</b>${trend(rec, recPrev, true, '%')}.`);
+
+    const slp = avgOf(entries, 'sleepH', wk, today), slpPrev = avgOf(entries, 'sleepH', prev, wk);
+    const need = avgOf(entries, 'sleepNeedH', wk, today);
+    if (slp !== null) {
+      let s = `You slept <b style="color:var(--m-sleep)">${fmtH(slp)}</b> a night on average`;
+      if (need !== null) s += slp >= need - 0.25 ? `, meeting your ~${fmtH(need)} need` : `, about ${fmtH(need - slp)} short of your ~${fmtH(need)} need`;
+      sentences.push(s + `${trend(slp, slpPrev, true, 'h')}.`);
+    }
+
+    const str = avgOf(entries, 'strain', wk, today), strPrev = avgOf(entries, 'strain', prev, wk);
+    const burn = avgOf(entries, 'calories', wk, today);
+    if (str !== null) {
+      let s = `Daily strain averaged <b style="color:var(--m-strain)">${str.toFixed(1)}</b>`;
+      if (burn !== null) s += ` (~${Math.round(burn)} kcal burned/day)`;
+      sentences.push(s + `${trend(str, strPrev, true, '')}.`);
+    }
+
+    const week = entries.filter((e) => e.key >= wk && e.key < today && e.recovery !== undefined);
+    if (week.length >= 3) {
+      const best = week.reduce((a, b) => (b.recovery > a.recovery ? b : a));
+      const worst = week.reduce((a, b) => (b.recovery < a.recovery ? b : a));
+      const dayName = (k) => parseKey(k).toLocaleDateString(undefined, { weekday: 'long' });
+      sentences.push(`Best day ${dayName(best.key)} (${best.recovery}%), toughest ${dayName(worst.key)} (${worst.recovery}%).`);
+    }
+
+    if (!sentences.length) {
+      wrap.innerHTML = SM.empty('activity', 'No digest yet', 'Once a week of data has synced, a plain-English summary of your trends appears here.');
+      return;
+    }
+    wrap.innerHTML = `<div class="card"><h2 style="margin-top:0">${SM.icon('info')} Last 7 days</h2><p style="margin:0;color:var(--ink-2);max-width:78ch">${sentences.join(' ')}</p></div>`;
   }
 
   /* ---------- shift-aware daily recommendations (unchanged rules) ---------- */
@@ -204,67 +268,67 @@
 
     if (today.code === 'N') {
       if (today.run === 1) {
-        recs.push(['info', '🌙', 'First night shift tonight', 'Sleep in as late as you can this morning and take a 90–120 minute nap between 14:00 and 17:00. Save caffeine for the start of the shift and cut it off 6+ hours before your morning bedtime.']);
+        recs.push(['info', 'moon', 'First night shift tonight', 'Sleep in as late as you can this morning and take a 90–120 minute nap between 14:00 and 17:00. Save caffeine for the start of the shift and cut it off 6+ hours before your morning bedtime.']);
       } else if (today.run === today.runLength) {
-        recs.push(['info', '🌙', `Last night shift tonight (${today.run} of ${today.runLength})`, 'Tomorrow morning, sleep a short 90 min–3 h block instead of a full day sleep, get bright daylight in the afternoon, then an early normal night — that flips you back to days fastest.']);
+        recs.push(['info', 'moon', `Last night shift tonight (${today.run} of ${today.runLength})`, 'Tomorrow morning, sleep a short 90 min–3 h block instead of a full day sleep, get bright daylight in the afternoon, then an early normal night — that flips you back to days fastest.']);
       } else {
-        recs.push(['info', '🌙', `Night ${today.run} of ${today.runLength}`, 'Protect your day sleep: blackout, phone on do-not-disturb, one continuous block starting within an hour of getting home. Eat your main meal before the shift, keep food between midnight and 06:00 light.']);
+        recs.push(['info', 'moon', `Night ${today.run} of ${today.runLength}`, 'Protect your day sleep: blackout, phone on do-not-disturb, one continuous block starting within an hour of getting home. Eat your main meal before the shift, keep food between midnight and 06:00 light.']);
       }
     } else if (today.code === 'D') {
-      recs.push(['info', '☀️', `Day shift ${today.run} of ${today.runLength} (07:00–19:00)`, 'Aim for lights out by 22:00 to bank 8 h before the alarm. Caffeine before noon only. Get daylight on your commute to keep your body clock anchored.']);
+      recs.push(['info', 'sun', `Day shift ${today.run} of ${today.runLength} (07:00–19:00)`, 'Aim for lights out by 22:00 to bank 8 h before the alarm. Caffeine before noon only. Get daylight on your commute to keep your body clock anchored.']);
     } else {
       const yesterday = shiftFor(addDays(now, -1));
       if (yesterday.code === 'N') {
-        recs.push(['info', '🛌', 'First rest day after nights', 'Short morning sleep, not a full day — then push through to a normal early bedtime tonight. Daylight and a walk this afternoon speed the reset.']);
+        recs.push(['info', 'bed', 'First rest day after nights', 'Short morning sleep, not a full day — then push through to a normal early bedtime tonight. Daylight and a walk this afternoon speed the reset.']);
       }
       if (tomorrow.code !== 'O') {
         const t = tomorrow.code === 'N' ? 'nights' : 'days';
-        recs.push(['info', '📅', `Back on ${t} tomorrow`, tomorrow.code === 'N' ? 'Stay up late tonight and lie in tomorrow to pre-shift your clock for the first night.' : 'Early night tonight — you are up before 06:00 tomorrow.']);
+        recs.push(['info', 'calendar', `Back on ${t} tomorrow`, tomorrow.code === 'N' ? 'Stay up late tonight and lie in tomorrow to pre-shift your clock for the first night.' : 'Early night tonight — you are up before 06:00 tomorrow.']);
       } else {
-        recs.push(['good', '✅', `Rest day ${today.run} of ${today.runLength}`, 'Keep sleep and meals near normal daytime hours so your baseline recovers before the next block.']);
+        recs.push(['good', 'check', `Rest day ${today.run} of ${today.runLength}`, 'Keep sleep and meals near normal daytime hours so your baseline recovers before the next block.']);
       }
     }
 
     if (!latest) {
-      recs.push(['warning', '📥', 'No Whoop data yet', 'Connect the Whoop sync or import your CSV export to unlock recovery-based recommendations.']);
+      recs.push(['warning', 'download', 'No Whoop data yet', 'Connect the Whoop sync or import your CSV export to unlock recovery-based recommendations.']);
       return recs;
     }
 
     if (latest.recovery !== undefined) {
       const onShift = today.code !== 'O';
       if (latest.recovery >= 67) {
-        recs.push(['good', '💪', `Recovery ${latest.recovery}% — green`, onShift ? 'You can handle a proper session today, but schedule it before a day shift or before sleep prep on nights — not right after a 12-hour shift.' : 'Great day for your hardest training of the week.']);
+        recs.push(['good', 'flame', `Recovery ${latest.recovery}% — green`, onShift ? 'You can handle a proper session today, but schedule it before a day shift or before sleep prep on nights — not right after a 12-hour shift.' : 'Great day for your hardest training of the week.']);
       } else if (latest.recovery >= 34) {
-        recs.push(['warning', '🟡', `Recovery ${latest.recovery}% — moderate`, 'Keep training to zone 2 cardio or light weights. Prioritise sleep quantity tonight over an extra session.']);
+        recs.push(['warning', 'alert', `Recovery ${latest.recovery}% — moderate`, 'Keep training to zone 2 cardio or light weights. Prioritise sleep quantity tonight over an extra session.']);
       } else {
-        recs.push(['critical', '🔴', `Recovery ${latest.recovery}% — red`, onShift ? 'Skip training. On shift: hydrate, eat properly, and get to bed the moment you are home. Red recoveries stack fast on this rota.' : 'Full rest day: no training, extra sleep, easy food. Let the body catch up before the next block.']);
+        recs.push(['critical', 'alert', `Recovery ${latest.recovery}% — red`, onShift ? 'Skip training. On shift: hydrate, eat properly, and get to bed the moment you are home. Red recoveries stack fast on this rota.' : 'Full rest day: no training, extra sleep, easy food. Let the body catch up before the next block.']);
       }
     }
 
     const hrvBase = baseline(entries, 'hrv', 14, latest.key);
     if (latest.hrv !== undefined && hrvBase) {
       const pct = ((latest.hrv - hrvBase) / hrvBase) * 100;
-      if (pct <= -10) recs.push(['serious', '📉', `HRV ${Math.abs(pct).toFixed(0)}% below your 14-day average`, 'Your nervous system is under load — common mid-nights. Drop training intensity, front-load protein and fluids, and guard your next sleep window.']);
+      if (pct <= -10) recs.push(['serious', 'activity', `HRV ${Math.abs(pct).toFixed(0)}% below your 14-day average`, 'Your nervous system is under load — common mid-nights. Drop training intensity, front-load protein and fluids, and guard your next sleep window.']);
     }
 
     const rhrBase = baseline(entries, 'rhr', 14, latest.key);
     if (latest.rhr !== undefined && rhrBase) {
       const pct = ((latest.rhr - rhrBase) / rhrBase) * 100;
-      if (pct >= 5) recs.push(['serious', '❤️', `Resting HR ${pct.toFixed(0)}% above your 14-day average`, 'Elevated RHR can signal poor sleep, dehydration or oncoming illness. Ease off caffeine and alcohol, hydrate, and watch tomorrow\'s reading.']);
+      if (pct >= 5) recs.push(['serious', 'heart', `Resting HR ${pct.toFixed(0)}% above your 14-day average`, 'Elevated RHR can signal poor sleep, dehydration or oncoming illness. Ease off caffeine and alcohol, hydrate, and watch tomorrow\'s reading.']);
     }
 
     const recent = series(entries, 'sleepH', 4);
     if (recent.length >= 3) {
       const avg = recent.reduce((a, b) => a + b.value, 0) / recent.length;
       if (avg < 6.5) {
-        recs.push(['serious', '😴', `Averaging ${avg.toFixed(1)} h sleep over the last ${recent.length} days`, today.code === 'N' ? 'You are building sleep debt mid-nights. Add a 30–90 min nap before tonight\'s shift and treat day sleep as non-negotiable.' : 'Bank extra sleep tonight and consider an afternoon nap — pay the debt down before the next shift block.']);
+        recs.push(['serious', 'bed', `Averaging ${avg.toFixed(1)} h sleep over the last ${recent.length} days`, today.code === 'N' ? 'You are building sleep debt mid-nights. Add a 30–90 min nap before tonight\'s shift and treat day sleep as non-negotiable.' : 'Bank extra sleep tonight and consider an afternoon nap — pay the debt down before the next shift block.']);
       }
     }
 
     if (entries.length >= 2) {
       const prev = entries[entries.length - 2];
       if (prev.strain !== undefined && latest.recovery !== undefined && prev.strain >= 14 && latest.recovery < 50) {
-        recs.push(['warning', '⚖️', 'High strain is outpacing recovery', `Yesterday's strain was ${prev.strain} but recovery came back at ${latest.recovery}%. On a 4-on-4-off rota, save the big efforts for your off days.`]);
+        recs.push(['warning', 'alert', 'High strain is outpacing recovery', `Yesterday's strain was ${prev.strain} but recovery came back at ${latest.recovery}%. On a 4-on-4-off rota, save the big efforts for your off days.`]);
       }
     }
 
@@ -277,7 +341,7 @@
     for (const [cls, icon, title, body] of recommendations(entries)) {
       const div = document.createElement('div');
       div.className = `rec ${cls}`;
-      div.innerHTML = `<div class="icon">${icon}</div><div><h4>${title}</h4><p>${body}</p></div>`;
+      div.innerHTML = `<div class="icon">${SM.icon(icon)}</div><div><h4>${title}</h4><p>${body}</p></div>`;
       wrap.appendChild(div);
     }
   }
@@ -369,69 +433,88 @@
     maxHR: () => ['info', 'Context metric', 'Highest heart rate reached — usually from training or running for the bus. Useful for checking training zones, not something to optimise.'],
   };
 
-  const GUIDE_ICON = { good: '✅', warning: '⚠️', serious: '🔴', info: 'ℹ️' };
+  const GUIDE_ICON = { good: 'check', warning: 'alert', serious: 'alert', info: 'info' };
 
   function renderGuide(entries) {
     const wrap = document.getElementById('guide');
+    const group = GROUPS.find((g) => g.key === activeTab());
     wrap.innerHTML = '';
-    if (!entries.length) {
-      wrap.innerHTML = '<p class="notice">Guidance for every metric appears here once data arrives.</p>';
-      return;
-    }
-    for (const group of GROUPS) {
-      const withData = group.metrics.filter((m) => latestWith(entries, m.key));
-      if (!withData.length) continue;
-      const h = document.createElement('h3');
-      h.textContent = group.title;
-      h.style.cssText = 'font-size:15px;margin:18px 0 8px';
-      wrap.appendChild(h);
-      for (const m of withData) {
-        const latest = latestWith(entries, m.key);
-        const v = latest[m.key];
-        const base = baseline(entries, m.key, 14, latest.key);
-        const [cls, note, advice] = GUIDE[m.key](v, { base, latest, entries });
-        const shown = +(+v).toFixed(2);
-        const div = document.createElement('div');
-        div.className = `rec ${cls}`;
-        div.innerHTML =
-          `<div class="icon">${GUIDE_ICON[cls]}</div><div><h4>${m.label}: ${shown}${m.unit ? ' ' + m.unit : ''} <span style="color:var(--muted);font-weight:500">· ${note}</span></h4>` +
-          `<p>${advice}</p></div>`;
-        wrap.appendChild(div);
-      }
-    }
-    if (!wrap.children.length) {
-      wrap.innerHTML = '<p class="notice">Guidance for every metric appears here once data arrives.</p>';
+    if (!entries.length) return; // empty state lives in the charts pane
+    const withData = group.metrics.filter((m) => latestWith(entries, m.key));
+    for (const m of withData) {
+      const latest = latestWith(entries, m.key);
+      const v = latest[m.key];
+      const base = baseline(entries, m.key, 14, latest.key);
+      const [cls, note, advice] = GUIDE[m.key](v, { base, latest, entries });
+      const shown = +(+v).toFixed(2);
+      const div = document.createElement('div');
+      div.className = `rec ${cls}`;
+      div.innerHTML =
+        `<div class="icon">${SM.icon(GUIDE_ICON[cls])}</div><div><h4>${m.label}: ${shown}${m.unit ? ' ' + m.unit : ''} <span style="color:var(--muted);font-weight:500">· ${note}</span></h4>` +
+        `<p>${advice}</p></div>`;
+      wrap.appendChild(div);
     }
   }
 
-  /* ---------- charts ---------- */
+  /* ---------- category tabs + charts ---------- */
+  const activeTab = () => Store.get('whoopTab', 'recovery');
+
+  function renderTabs() {
+    const bar = document.getElementById('cat-tabs');
+    bar.innerHTML = '';
+    for (const g of GROUPS) {
+      const btn = document.createElement('button');
+      btn.setAttribute('role', 'tab');
+      btn.setAttribute('aria-selected', g.key === activeTab() ? 'true' : 'false');
+      btn.style.setProperty('--tab-accent', g.color);
+      btn.innerHTML = `${SM.icon(g.icon)}${g.title}`;
+      btn.addEventListener('click', () => {
+        Store.set('whoopTab', g.key);
+        renderTabs();
+        const entries = sortedEntries();
+        renderCharts(entries);
+        renderGuide(entries);
+      });
+      bar.appendChild(btn);
+    }
+  }
+
   function renderCharts(entries) {
     const days = +document.getElementById('range').value;
     const wrap = document.getElementById('charts');
+    const group = GROUPS.find((g) => g.key === activeTab());
     wrap.innerHTML = '';
-    for (const group of GROUPS) {
-      const h = document.createElement('h3');
-      h.textContent = group.title;
-      h.style.cssText = 'font-size:15px;margin:18px 0 10px';
-      wrap.appendChild(h);
-      const grid = document.createElement('div');
-      grid.className = 'grid cols-2';
-      const missing = [];
-      for (const m of group.metrics) {
-        const data = series(entries, m.key, days);
-        if (!data.length) { missing.push(m.label); continue; }
-        const div = document.createElement('div');
-        grid.appendChild(div);
-        renderLineChart(div, { title: m.label, unit: m.unit, color: m.color, data, yMin: m.min, yMax: m.max });
-      }
-      wrap.appendChild(grid);
+
+    if (!entries.length) {
+      wrap.innerHTML = SM.empty('activity', 'No Whoop data yet',
+        'Connect your Whoop above (or import the CSV export) and your trends will appear here. The first sync takes under a minute.');
+      return;
+    }
+
+    const grid = document.createElement('div');
+    grid.className = 'grid cols-2';
+    const missing = [];
+    for (const m of group.metrics) {
+      const data = series(entries, m.key, days);
+      if (!data.length) { missing.push(m.label); continue; }
+      const div = document.createElement('div');
+      grid.appendChild(div);
+      renderLineChart(div, { title: m.label, unit: m.unit, color: group.color, data, yMin: m.min, yMax: m.max });
+    }
+    if (!grid.children.length) {
+      wrap.innerHTML = SM.empty(group.icon, `No ${group.title.toLowerCase()} data in this range`,
+        group.key === 'vitals'
+          ? 'SpO₂ and skin temperature need a Whoop 4.0+ worn overnight — they usually appear after the first full night of synced sleep.'
+          : 'This will fill in as Whoop scores more days. New members can take a few days to calibrate.');
+      return;
+    }
+    wrap.appendChild(grid);
+    if (missing.length) {
       const note = document.createElement('p');
       note.className = 'notice';
       note.style.marginTop = '8px';
-      note.textContent = missing.length === group.metrics.length
-        ? 'No data in this range yet for any of these metrics.'
-        : missing.length ? `No data yet for: ${missing.join(', ')}.` : '';
-      if (note.textContent) wrap.appendChild(note);
+      note.textContent = `No data yet for: ${missing.join(', ')}.`;
+      wrap.appendChild(note);
     }
   }
 
@@ -439,6 +522,8 @@
     const entries = sortedEntries();
     renderTiles(entries);
     renderRecs(entries);
+    renderDigest(entries);
+    renderTabs();
     renderGuide(entries);
     renderCharts(entries);
     document.getElementById('entry-count').textContent = entries.length
@@ -491,14 +576,14 @@
     try {
       const prev = Store.get('lastSync', null);
       const ref = await dispatchSync(cfg);
-      syncStatus(`⏳ Sync started on GitHub (${ref}) — waiting for fresh data…`);
+      syncStatus(`Sync started on GitHub (${ref}) — waiting for fresh data…`);
       for (let i = 0; i < 16; i++) {
         await new Promise((r) => setTimeout(r, 15000));
         const updated = await loadRepoWhoopData();
         if (updated && updated !== prev) {
           Store.set('lastSync', updated);
           refresh();
-          syncStatus(`🔄 Auto-synced from the Whoop API — last sync ${new Date(updated).toLocaleString()}.`);
+          syncStatus(`Auto-synced from the Whoop API — last sync ${new Date(updated).toLocaleString()}.`);
           return;
         }
       }
@@ -531,7 +616,7 @@
         branch: document.getElementById('sync-branch').value.trim(),
       });
       syncDialog.close();
-      syncStatus('One-click sync configured — the ↻ Sync now button will trigger the workflow directly.');
+      syncStatus('One-click sync configured — the Sync now button will trigger the workflow directly.');
     });
 
     document.getElementById('csv-file').addEventListener('change', async (ev) => {
@@ -565,7 +650,7 @@
     loadRepoWhoopData().then((updated) => {
       if (!updated) return;
       Store.set('lastSync', updated);
-      syncStatus(`🔄 Auto-synced from the Whoop API — last sync ${new Date(updated).toLocaleString()}.`);
+      syncStatus(`Auto-synced from the Whoop API — last sync ${new Date(updated).toLocaleString()}.`);
       refresh();
     });
   });

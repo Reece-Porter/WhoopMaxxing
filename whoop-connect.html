@@ -3,23 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ShiftMaxx — Connect Whoop</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <title>Connect Whoop · ShiftMaxx</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23171512'/><path d='M17.5 3 7 17h5.5L11 29 22 14h-5.5L17.5 3z' fill='%23d9a441'/></svg>">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body data-page="whoop">
-  <header class="top">
-    <div class="wrap">
-      <div class="brand">Shift<span>Maxx</span></div>
-      <nav class="nav">
-        <a href="index.html" data-page="home">Dashboard</a>
-        <a href="rota.html" data-page="rota">Rota</a>
-        <a href="whoop.html" data-page="whoop">Whoop</a>
-        <a href="meals.html" data-page="meals">Meal prep</a>
-        <a href="batches.html" data-page="batches">Batch cook</a>
-      </nav>
-    </div>
-  </header>
+  <header class="top" id="app-header"></header>
+  <div class="today-strip" id="today-strip"></div>
 
   <main class="wrap" style="max-width:760px">
     <h1>Connect Whoop</h1>
@@ -59,6 +49,8 @@
   </main>
 
   <script src="assets/js/shifts.js"></script>
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/ui.js"></script>
   <script>
     const AUTH_URL = 'https://api.prod.whoop.com/oauth/oauth2/auth';
     const REDIRECT = 'http://localhost:8789/callback';
@@ -81,7 +73,7 @@
       let code = null;
       try { code = new URL(raw).searchParams.get('code'); } catch { const m = raw.match(/[?&]code=([^&\s]+)/); if (m) code = m[1]; }
       if (code) {
-        out.innerHTML = '✅ Code found — now do <strong>Step 3</strong> straight away (paste the same URL into the workflow input).';
+        out.innerHTML = 'Code found — now do <strong>Step 3</strong> straight away (paste the same URL into the workflow input).';
         out.className = '';
       } else {
         out.textContent = 'No "code=" found in that URL. Make sure you copied the full address after approving, and that it wasn\'t already used.';

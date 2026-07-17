@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Week plan · ShiftMaxx</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23171512'/><path d='M17.5 3 7 17h5.5L11 29 22 14h-5.5L17.5 3z' fill='%23d9a441'/></svg>">
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    /* This page is built to be printed: light, dense, ink-friendly. */
+    .week-day { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; break-inside: avoid; }
+    .week-day h3 { margin: 0 0 6px; font-size: 14px; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+    .week-day .shift-lbl { font-weight: 600; }
+    .week-day ul { margin: 4px 0; padding-left: 18px; }
+    .week-day li { margin: 2px 0; font-size: 13px; }
+    .week-day .sec { font-weight: 600; font-size: 12.5px; margin-top: 6px; color: var(--ink-2); }
+    .week-day .tot { color: var(--muted); font-size: 12.5px; margin-top: 6px; }
+    @media print {
+      .week-day { border-color: #bbb; }
+      .week-day .sec, .week-day .tot { color: #444; }
+      h1 { font-size: 20px; margin-top: 0; }
+    }
+  </style>
+</head>
+<body data-page="meals">
+  <header class="top" id="app-header"></header>
+  <div class="today-strip" id="today-strip"></div>
+
+  <main class="wrap" style="max-width:820px">
+    <h1 id="week-title">Week plan</h1>
+    <p class="sub no-print">Shifts and planned meals for the week — use the buttons to pick the week, then print (it comes out light and ink-friendly).</p>
+    <div class="form-row no-print" style="margin-bottom:18px">
+      <button id="prev-week" class="small">Previous week</button>
+      <button id="this-week" class="small">This week</button>
+      <button id="next-week" class="small">Next week</button>
+      <button id="do-print" class="primary small"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>Print</button>
+    </div>
+    <div id="week"></div>
+  </main>
+
+  <script src="assets/js/shifts.js"></script>
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/food.js"></script>
+  <script>
+    (function () {
+      let start = (() => {
+        const now = new Date();
+        const monday = addDays(now, -((now.getDay() + 6) % 7));
+        return monday;
+      })();
+
+      function itemMacros(item) {
+        const f = item.unit === 'portion' ? item.grams : item.grams / 100;
+        return {
+          kcal: Math.round(item.per100.kcal * f),
+          protein: +(item.per100.protein * f).toFixed(0),
+          carbs: +(item.per100.carbs * f).toFixed(0),
+          fat: +(item.per100.fat * f).toFixed(0),
+        };
+      }
+
+      function render() {
+        const end = addDays(start, 6);
+        document.getElementById('week-title').textContent =
+          `Week plan · ${start.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })} – ${end.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}`;
+        const wrap = document.getElementById('week');
+        wrap.innerHTML = '';
+        const plans = getMealPlans();
+        const targets = getTargets();
+
+        for (let i = 0; i < 7; i++) {
+          const d = addDays(start, i);
+          const key = dateKey(d);
+          const s = shiftFor(d);
+          const labels = Food.SECTION_LABELS[s.code];
+          const plan = plans[key];
+          const div = document.createElement('div');
+          div.className = 'week-day';
+          const shiftColor = s.code === 'N' ? 'var(--shift-night)' : s.code === 'D' ? 'var(--shift-day)' : 'var(--muted)';
+          let html = `<h3><span>${d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'short' })}</span>` +
+            `<span class="shift-lbl" style="color:${shiftColor}">${s.code === 'O' ? `Off ${s.run}/${s.runLength}` : `${s.label} ${s.run}/${s.runLength} · ${s.times.start}–${s.times.end}`}</span></h3>`;
+          const totals = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
+          let any = false;
+          if (plan) {
+            labels.forEach((label, si) => {
+              const items = plan.sections[si] || [];
+              if (!items.length) return;
+              any = true;
+              html += `<div class="sec">${label}</div><ul>`;
+              for (const it of items) {
+                const m = itemMacros(it);
+                for (const k in totals) totals[k] += m[k];
+                const qty = it.unit === 'portion' ? `${it.grams} portion${it.grams === 1 ? '' : 's'}` : `${it.grams} g`;
+                html += `<li>${Food.escapeHtml(it.name)} — ${qty} · ${m.kcal} kcal</li>`;
+              }
+              html += '</ul>';
+            });
+          }
+          html += any
+            ? `<div class="tot">Day total: ${totals.kcal} / ${targets.kcal} kcal · P ${totals.protein}g · C ${totals.carbs}g · F ${totals.fat}g</div>`
+            : '<div class="tot">Nothing planned.</div>';
+          div.innerHTML = html;
+          wrap.appendChild(div);
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('prev-week').addEventListener('click', () => { start = addDays(start, -7); render(); });
+        document.getElementById('next-week').addEventListener('click', () => { start = addDays(start, 7); render(); });
+        document.getElementById('this-week').addEventListener('click', () => { start = addDays(new Date(), -((new Date().getDay() + 6) % 7)); render(); });
+        document.getElementById('do-print').addEventListener('click', () => window.print());
+        render();
+      });
+    })();
+  </script>
+</body>
+</html>

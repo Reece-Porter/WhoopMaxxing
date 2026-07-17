@@ -33,14 +33,38 @@
     Food.renderFavourites(document.getElementById('favourites'), { onAdd: beginAdd, onFavChange: renderFavs });
   }
 
+  /* Preselect the meal slot from the clock and that day's shift, so adding
+   * food usually needs no slot choice at all (still overridable). */
+  function suggestSection(code) {
+    const h = new Date().getHours();
+    if (code === 'N') {
+      if (h >= 12 && h < 19) return 0;  // pre-shift meal
+      if (h >= 22 || h < 4) return 1;   // midnight meal
+      if (h >= 4 && h < 11) return 2;   // post-shift meal
+      return 3;
+    }
+    if (code === 'D') {
+      if (h < 10) return 0;             // breakfast
+      if (h < 15) return 1;             // lunch
+      if (h < 22) return 2;             // post-shift dinner
+      return 3;
+    }
+    if (h < 11) return 0;
+    if (h < 15) return 1;
+    if (h < 21) return 2;
+    return 3;
+  }
+
   function beginAdd(food) {
     pendingFood = food;
     const dlg = document.getElementById('add-dialog');
     document.getElementById('add-food-name').textContent = food.name + (food.brand ? ` (${food.brand})` : '');
     document.getElementById('add-grams').value = 100;
     const sel = document.getElementById('add-section');
-    const labels = Food.SECTION_LABELS[shiftFor(parseKey(selectedDate)).code];
+    const code = shiftFor(parseKey(selectedDate)).code;
+    const labels = Food.SECTION_LABELS[code];
     sel.innerHTML = labels.map((l, i) => `<option value="${i}">${l}</option>`).join('');
+    if (selectedDate === dateKey(new Date())) sel.value = String(suggestSection(code));
     dlg.showModal();
   }
 
@@ -237,10 +261,33 @@
       const tform = document.getElementById('targets-form');
       for (const [key] of MACROS) tform[key].value = getTargets()[key];
       renderPlan();
-      apply.textContent = '✓ Applied';
+      apply.textContent = 'Applied';
       setTimeout(() => { apply.textContent = 'Use as my daily targets'; }, 2000);
     });
     wrap.appendChild(apply);
+  }
+
+  /* Low-recovery banner: surfaces the Whoop signal where food decisions happen,
+   * with a one-click higher-carb variant of today's targets. */
+  function renderRecoveryBanner() {
+    const host = document.getElementById('meals-banner');
+    if (!host) return;
+    const rec = latestRecovery();
+    if (rec === null || rec >= 34) { host.innerHTML = ''; return; }
+    const t = getTargets();
+    const shiftCarbs = Math.round(t.carbs * 1.2);
+    const shiftFat = Math.max(40, Math.round((t.kcal - t.protein * 4 - shiftCarbs * 4) / 9));
+    host.innerHTML = SM.banner('warn', 'alert', `Recovery is low today (${rec}%)`,
+      `Fuelling matters more than dieting on days like this: hold calories at target, keep protein up, and lean carbs over fat to restock glycogen. ` +
+      `<button id="carb-shift" class="small" style="margin-top:8px">Use higher-carb split today (${shiftCarbs}g carbs / ${shiftFat}g fat)</button>`);
+    document.getElementById('carb-shift').addEventListener('click', () => {
+      setTargets({ ...t, carbs: shiftCarbs, fat: shiftFat });
+      const tform = document.getElementById('targets-form');
+      for (const [key] of MACROS) tform[key].value = getTargets()[key];
+      renderPlan();
+      renderRecoveryBanner();
+      host.insertAdjacentHTML('beforeend', '<p class="notice" style="margin:6px 0 0">Applied — today\'s targets now favour carbs. Tomorrow\'s recommendation resets as normal.</p>');
+    });
   }
 
   function initBodyForm() {
@@ -323,6 +370,13 @@
     renderPlan();
     initBodyForm();
     renderIntake();
-    loadRepoWhoopData().then((updated) => { if (updated) renderIntake(); });
+    renderRecoveryBanner();
+    loadRepoWhoopData().then((updated) => {
+      if (updated) {
+        renderIntake();
+        renderRecoveryBanner();
+        SM.renderTodayStrip();
+      }
+    });
   });
 })();

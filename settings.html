@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Settings · ShiftMaxx</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23171512'/><path d='M17.5 3 7 17h5.5L11 29 22 14h-5.5L17.5 3z' fill='%23d9a441'/></svg>">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="settings">
+  <header class="top" id="app-header"></header>
+  <div class="today-strip" id="today-strip"></div>
+
+  <main class="wrap" style="max-width:820px">
+    <h1>Settings</h1>
+    <p class="sub">Everything in one place. All values are stored only in this browser.</p>
+
+    <div class="card" style="margin-bottom:12px">
+      <h2>Body &amp; goal</h2>
+      <p class="notice" style="margin-top:0">Used by the Meal prep intake recommendation alongside your measured Whoop burn.</p>
+      <form id="body-form" class="form-row">
+        <label class="field">Weight kg <input type="number" name="weightKg" min="30" max="250" step="0.5" style="width:84px"></label>
+        <label class="field">Height cm <input type="number" name="heightCm" min="120" max="230" step="0.5" style="width:84px"></label>
+        <label class="field">Age <input type="number" name="age" min="16" max="100" style="width:68px"></label>
+        <label class="field">Sex (for estimate)
+          <select name="sex"><option value="male">Male</option><option value="female">Female</option></select>
+        </label>
+        <label class="field">Goal
+          <select name="goal">
+            <option value="maintain">Maintain</option>
+            <option value="lose">Lose fat</option>
+            <option value="gain">Build muscle</option>
+          </select>
+        </label>
+      </form>
+      <p id="body-saved" class="notice" style="margin:8px 0 0"></p>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <h2>Daily targets</h2>
+      <p class="notice" style="margin-top:0">The numbers the Meal prep day totals track against. The Meal prep page can also set these from your Whoop burn in one click.</p>
+      <form id="targets-form" class="form-row">
+        <label class="field">Calories <input type="number" name="kcal" min="0" style="width:92px"></label>
+        <label class="field">Protein g <input type="number" name="protein" min="0" style="width:84px"></label>
+        <label class="field">Carbs g <input type="number" name="carbs" min="0" style="width:84px"></label>
+        <label class="field">Fat g <input type="number" name="fat" min="0" style="width:84px"></label>
+        <button type="submit" class="primary">Save targets</button>
+      </form>
+      <p id="targets-saved" class="notice" style="margin:8px 0 0"></p>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <h2>Rota</h2>
+      <p class="notice" style="margin-top:0" id="rota-info"></p>
+      <p class="notice">To change the pattern, start date or shift times, edit the <code>ROTA</code> object at the top of <code>assets/js/shifts.js</code> — it's four clearly commented lines.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <h2>Whoop sync</h2>
+      <p class="notice" style="margin-top:0" id="sync-info">Checking sync status…</p>
+      <div class="form-row">
+        <a class="btn small" href="whoop-connect.html">Connect / re-authorise Whoop</a>
+        <a class="btn small" href="whoop.html">Open Whoop page (Sync now lives there)</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Your data</h2>
+      <p class="notice" style="margin-top:0" id="data-info"></p>
+      <div class="form-row">
+        <button id="export-data" class="small">Download backup (JSON)</button>
+        <button id="clear-meals" class="small ghost">Clear meal plans</button>
+        <button id="clear-batches" class="small ghost">Clear batches</button>
+        <button id="clear-whoop" class="small ghost">Clear Whoop data</button>
+      </div>
+      <p class="notice" style="margin:10px 0 0">The backup contains everything this browser has stored (Whoop days, meal plans, batches, favourites, settings). Keep one before clearing anything.</p>
+    </div>
+  </main>
+
+  <script src="assets/js/shifts.js"></script>
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/settings.js"></script>
+</body>
+</html>

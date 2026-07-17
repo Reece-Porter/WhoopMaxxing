@@ -3,23 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ShiftMaxx — Whoop data</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <title>Whoop · ShiftMaxx</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23171512'/><path d='M17.5 3 7 17h5.5L11 29 22 14h-5.5L17.5 3z' fill='%23d9a441'/></svg>">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body data-page="whoop">
-  <header class="top">
-    <div class="wrap">
-      <div class="brand">Shift<span>Maxx</span></div>
-      <nav class="nav">
-        <a href="index.html" data-page="home">Dashboard</a>
-        <a href="rota.html" data-page="rota">Rota</a>
-        <a href="whoop.html" data-page="whoop">Whoop</a>
-        <a href="meals.html" data-page="meals">Meal prep</a>
-        <a href="batches.html" data-page="batches">Batch cook</a>
-      </nav>
-    </div>
-  </header>
+  <header class="top" id="app-header"></header>
+  <div class="today-strip" id="today-strip"></div>
 
   <main class="wrap">
     <h1>Whoop data</h1>
@@ -30,7 +20,7 @@
         <h2 style="margin-top:0">Get your data in</h2>
         <p id="sync-status" class="notice">Auto-sync not detected — <a href="whoop-connect.html">connect your Whoop</a> (browser-only, ~10 minutes) and this page will update itself every 3 hours. Or import manually below.</p>
         <div class="form-row" style="margin-bottom:10px">
-          <button id="sync-now" class="small primary">↻ Sync now</button>
+          <button id="sync-now" class="small primary"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.6-6.4M21 3v6h-6"/></svg>Sync now</button>
           <button id="sync-setup" class="small ghost">Set up one-click sync</button>
         </div>
         <h3 style="font-size:14px;margin:14px 0 4px">Import Whoop CSV</h3>
@@ -46,21 +36,25 @@
     <h2>Today</h2>
     <div class="grid cols-3" id="tiles"></div>
 
+    <h2>This week</h2>
+    <div id="digest"></div>
+
     <h2>Today's plan</h2>
     <p class="notice" style="margin-top:-6px;margin-bottom:12px">Rules-based guidance combining your rota with your recovery, HRV, resting HR, sleep and strain. Not medical advice.</p>
     <div id="recs"></div>
 
-    <h2 style="display:flex;justify-content:space-between;align-items:center">Trends — every Whoop metric
+    <h2 style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">Trends &amp; guidance
       <select id="range" aria-label="Date range">
         <option value="14">Last 14 days</option>
         <option value="30" selected>Last 30 days</option>
         <option value="90">Last 90 days</option>
       </select>
     </h2>
+    <div class="tabs" id="cat-tabs" role="tablist" aria-label="Metric category"></div>
     <div id="charts"></div>
 
-    <h2>How to improve each score</h2>
-    <p class="notice" style="margin-top:-6px;margin-bottom:12px">Your latest value for every metric, judged against healthy ranges or your own 14-day average, with the levers that move it. Not medical advice.</p>
+    <h3 style="margin:24px 0 10px">How to improve these scores</h3>
+    <p class="notice" style="margin-top:-4px;margin-bottom:12px">Your latest value for each metric in this category, judged against healthy ranges or your own 14-day average. Not medical advice.</p>
     <div id="guide"></div>
 
     <dialog id="sync-dialog" style="background:var(--surface);color:var(--ink);border:1px solid var(--border);border-radius:12px;padding:20px;max-width:440px">
@@ -86,6 +80,7 @@
 
   <script src="assets/js/shifts.js"></script>
   <script src="assets/js/store.js"></script>
+  <script src="assets/js/ui.js"></script>
   <script src="assets/js/charts.js"></script>
   <script src="assets/js/whoop.js"></script>
 </body>

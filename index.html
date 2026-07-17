@@ -3,99 +3,109 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ShiftMaxx — Dashboard</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
+  <title>Dashboard · ShiftMaxx</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23171512'/><path d='M17.5 3 7 17h5.5L11 29 22 14h-5.5L17.5 3z' fill='%23d9a441'/></svg>">
   <link rel="stylesheet" href="assets/css/style.css">
 </head>
 <body data-page="home">
-  <header class="top">
-    <div class="wrap">
-      <div class="brand">Shift<span>Maxx</span></div>
-      <nav class="nav">
-        <a href="index.html" data-page="home">Dashboard</a>
-        <a href="rota.html" data-page="rota">Rota</a>
-        <a href="whoop.html" data-page="whoop">Whoop</a>
-        <a href="meals.html" data-page="meals">Meal prep</a>
-        <a href="batches.html" data-page="batches">Batch cook</a>
-      </nav>
-    </div>
-  </header>
+  <header class="top" id="app-header"></header>
+  <div class="today-strip" id="today-strip"></div>
 
   <main class="wrap">
     <h1 id="greeting">Dashboard</h1>
     <p class="sub" id="today-line"></p>
 
-    <div class="grid cols-3" id="home-tiles"></div>
+    <div id="onboarding"></div>
+
+    <div class="grid cols-4" id="home-tiles"></div>
 
     <h2>Next 8 days</h2>
     <div class="strip" id="home-strip"></div>
 
-    <h2>Jump in</h2>
-    <div class="grid cols-3">
-      <a class="card" href="rota.html" style="text-decoration:none;color:inherit">
-        <h3 style="margin:0 0 4px">📅 Rota</h3>
-        <p class="notice" style="margin:0">Full calendar of your 4-nights / 4-off / 4-days / 4-off cycle.</p>
-      </a>
-      <a class="card" href="whoop.html" style="text-decoration:none;color:inherit">
-        <h3 style="margin:0 0 4px">📈 Whoop data</h3>
-        <p class="notice" style="margin:0">Import your Whoop export, track trends, get shift-aware recommendations.</p>
-      </a>
-      <a class="card" href="meals.html" style="text-decoration:none;color:inherit">
-        <h3 style="margin:0 0 4px">🍽️ Meal prep</h3>
-        <p class="notice" style="margin:0">Scan barcodes or search foods, plan meals per shift, hit your macros.</p>
-      </a>
-    </div>
+    <h2>Modules</h2>
+    <div class="grid cols-4" id="module-cards"></div>
   </main>
 
   <script src="assets/js/shifts.js"></script>
   <script src="assets/js/store.js"></script>
+  <script src="assets/js/ui.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const now = new Date();
       const today = shiftFor(now);
+      const hour = now.getHours();
+      document.getElementById('greeting').textContent =
+        hour < 5 ? 'Deep in the night' : hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
       const line = today.code === 'O'
-        ? `Today: off (day ${today.run} of ${today.runLength}).`
-        : `Today: ${today.label.toLowerCase()} ${today.run} of ${today.runLength}, ${today.times.start}–${today.times.end}.`;
+        ? `Today is a rest day (day ${today.run} of ${today.runLength} off).`
+        : `Today is ${today.label.toLowerCase()} ${today.run} of ${today.runLength}, ${today.times.start}–${today.times.end}.`;
       document.getElementById('today-line').textContent =
         now.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' }) + ' — ' + line;
 
-      // tiles: today's shift, latest recovery, today's calories planned
-      const tiles = document.getElementById('home-tiles');
-      const shiftTile = document.createElement('div');
-      shiftTile.className = 'card tile';
-      shiftTile.innerHTML = `<div class="label">Today's shift</div>
-        <div class="value" style="color:${today.code === 'N' ? 'var(--shift-night)' : today.code === 'D' ? 'var(--shift-day)' : 'var(--muted)'}">${today.code === 'O' ? 'OFF' : today.label.split(' ')[0].toUpperCase()}</div>
-        <div class="delta">${today.code === 'O' ? `Rest day ${today.run}/${today.runLength}` : `${today.run} of ${today.runLength} · ${today.times.start}–${today.times.end}`}</div>`;
-      tiles.appendChild(shiftTile);
+      // first-run onboarding (dismissable, one time)
+      if (!Store.get('onboarded', false)) {
+        const ob = document.getElementById('onboarding');
+        ob.innerHTML = `
+          <div class="card" style="margin-bottom:20px;border-color:rgba(217,164,65,.35)">
+            <h2 style="margin-top:0">${SM.icon('zap')} Welcome to ShiftMaxx</h2>
+            <p style="color:var(--ink-2);margin:6px 0 12px;max-width:70ch">Your shift-work command centre. <b>Rota</b> knows your 4-on/4-off pattern. <b>Whoop</b> pulls your recovery, sleep and strain and turns them into shift-aware advice. <b>Meal prep</b> sets calorie and macro targets from your measured burn, and <b>Batch cook</b> works out per-portion macros for anything you cook in bulk. Everything stays in your browser.</p>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <a class="btn" href="whoop-connect.html" style="background:var(--brand);color:var(--brand-ink);border-color:var(--brand)">Connect your Whoop</a>
+              <button id="ob-dismiss" class="ghost">Got it — don't show again</button>
+            </div>
+          </div>`;
+        document.getElementById('ob-dismiss').addEventListener('click', () => {
+          Store.set('onboarded', true);
+          ob.innerHTML = '';
+        });
+      }
 
-      const recTile = document.createElement('div');
-      recTile.className = 'card tile';
-      const fillRecTile = () => {
+      // tiles
+      const tiles = document.getElementById('home-tiles');
+      const tile = (accent, label, icon, value, delta) => {
+        const div = document.createElement('div');
+        div.className = `card tile accent-${accent}`;
+        div.innerHTML = `<div class="label">${SM.icon(icon)}${label}</div><div class="value">${value}</div><div class="delta">${delta}</div>`;
+        tiles.appendChild(div);
+        return div;
+      };
+
+      const shiftColor = today.code === 'N' ? 'var(--shift-night)' : today.code === 'D' ? 'var(--shift-day)' : 'var(--muted)';
+      tile('shift', "Today's shift", today.code === 'N' ? 'moon' : today.code === 'D' ? 'sun' : 'calendar',
+        `<span style="color:${shiftColor}">${today.code === 'O' ? 'OFF' : today.label.split(' ')[0].toUpperCase()}</span>`,
+        today.code === 'O' ? `Rest day ${today.run} of ${today.runLength}` : `${today.run} of ${today.runLength} · ${today.times.start}–${today.times.end}`);
+
+      const recTile = tile('recovery', 'Recovery', 'activity', '—', `<a href="whoop-connect.html">Connect Whoop</a>`);
+      const sleepTile = tile('sleep', 'Last sleep', 'bed', '—', 'no data yet');
+      const fillWhoopTiles = () => {
         const whoop = getWhoopData();
         const keys = Object.keys(whoop).sort();
-        const latest = keys.length ? whoop[keys[keys.length - 1]] : null;
-        if (latest && latest.recovery !== undefined) {
-          const st = latest.recovery >= 67 ? '✅ Green' : latest.recovery >= 34 ? '⚠️ Yellow' : '⛔ Red';
-          recTile.innerHTML = `<div class="label">Latest recovery</div><div class="value">${latest.recovery}<small>%</small></div><div class="delta">${st} · ${keys[keys.length - 1]}</div>`;
-        } else {
-          recTile.innerHTML = `<div class="label">Latest recovery</div><div class="value">—</div><div class="delta"><a href="whoop.html">Import Whoop data</a></div>`;
+        let rec = null, sleep = null, perf = null;
+        for (let i = keys.length - 1; i >= 0; i--) {
+          const d = whoop[keys[i]];
+          if (rec === null && d.recovery !== undefined) rec = d.recovery;
+          if (sleep === null && d.sleepH !== undefined) { sleep = d.sleepH; perf = d.sleepPerf; }
+          if (rec !== null && sleep !== null) break;
+        }
+        if (rec !== null) {
+          const band = rec >= 67 ? ['check', 'Green — well recovered'] : rec >= 34 ? ['alert', 'Yellow — moderate'] : ['alert', 'Red — take it easy'];
+          recTile.innerHTML = `<div class="label">${SM.icon('activity')}Recovery</div><div class="value">${rec}<small>%</small></div><div class="delta">${SM.icon(band[0])} ${band[1]}</div>`;
+        }
+        if (sleep !== null) {
+          const h = Math.floor(sleep), m = Math.round((sleep - h) * 60);
+          sleepTile.innerHTML = `<div class="label">${SM.icon('bed')}Last sleep</div><div class="value">${h}<small>h</small> ${m}<small>m</small></div><div class="delta">${perf !== undefined && perf !== null ? perf + '% of need met' : ''}</div>`;
         }
       };
-      fillRecTile();
-      loadRepoWhoopData().then((updated) => { if (updated) fillRecTile(); });
-      tiles.appendChild(recTile);
+      fillWhoopTiles();
+      loadRepoWhoopData().then((u) => { if (u) { fillWhoopTiles(); SM.renderTodayStrip(); } });
 
       const plans = getMealPlans();
       const plan = plans[dateKey(now)];
       let kcal = 0;
       if (plan) for (const s in plan.sections) for (const it of plan.sections[s]) kcal += Math.round(it.per100.kcal * (it.unit === 'portion' ? it.grams : it.grams / 100));
-      const targets = getTargets();
-      const mealTile = document.createElement('div');
-      mealTile.className = 'card tile';
-      mealTile.innerHTML = plan
-        ? `<div class="label">Planned today</div><div class="value">${kcal}<small> kcal</small></div><div class="delta">of ${targets.kcal} kcal target</div>`
-        : `<div class="label">Planned today</div><div class="value">—</div><div class="delta"><a href="meals.html">Plan today's meals</a></div>`;
-      tiles.appendChild(mealTile);
+      tile('strain', 'Planned intake', 'utensils',
+        plan ? `${kcal}<small> kcal</small>` : '—',
+        plan ? `of ${getTargets().kcal} kcal target` : `<a href="meals.html">Plan today's meals</a>`);
 
       // 8-day strip
       const strip = document.getElementById('home-strip');
@@ -106,6 +116,17 @@
           <div class="code">${u.code === 'O' ? 'OFF' : u.code === 'N' ? 'NIGHT' : 'DAY'}</div>`;
         strip.appendChild(div);
       }
+
+      // module cards
+      const mods = [
+        ['rota.html', 'calendar', 'Rota', 'Your 4-on/4-off calendar, block by block.'],
+        ['whoop.html', 'activity', 'Whoop', 'Trends, digest and advice for every metric.'],
+        ['meals.html', 'utensils', 'Meal prep', 'Plan meals against Whoop-driven targets.'],
+        ['batches.html', 'pot', 'Batch cook', 'Per-portion macros for bulk cooking.'],
+      ];
+      document.getElementById('module-cards').innerHTML = mods
+        .map(([href, ic, t, d]) => `<a class="card" href="${href}"><h3 style="margin:0 0 4px;display:flex;align-items:center;gap:8px">${SM.icon(ic)}${t}</h3><p class="notice" style="margin:0">${d}</p></a>`)
+        .join('');
     });
   </script>
 </body>
