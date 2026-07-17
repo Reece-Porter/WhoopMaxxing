@@ -1,11 +1,33 @@
 {
- "updated": "2026-07-17T03:37:20.147Z",
+ "updated": "2026-07-17T08:28:38.892Z",
  "source": "whoop-api",
  "days": {
+  "2026-07-16": {
+   "strain": 4.4,
+   "calories": 708,
+   "avgHR": 52,
+   "maxHR": 128,
+   "sleepH": 8.35,
+   "remH": 1.92,
+   "deepH": 2.04,
+   "lightH": 4.39,
+   "awakeH": 0.33,
+   "disturbances": 6,
+   "sleepPerf": 100,
+   "sleepConsistency": 90,
+   "sleepEfficiency": 96.3,
+   "respRate": 14.6,
+   "sleepNeedH": 7.88,
+   "recovery": 79,
+   "hrv": 91,
+   "rhr": 49,
+   "spo2": 95.4,
+   "skinTemp": 31.8
+  },
   "2026-07-15": {
    "strain": 9.7,
-   "calories": 2433,
-   "avgHR": 62,
+   "calories": 2126,
+   "avgHR": 65,
    "maxHR": 132,
    "sleepH": 9.08,
    "remH": 1.7,
@@ -90,18 +112,18 @@
    "avgHR": 0,
    "maxHR": 0
   },
-  "2026-07-16": {
-   "sleepH": 8.35,
-   "remH": 1.92,
-   "deepH": 2.04,
-   "lightH": 4.39,
-   "awakeH": 0.33,
-   "disturbances": 6,
-   "sleepPerf": 100,
-   "sleepConsistency": 90,
-   "sleepEfficiency": 96.3,
-   "respRate": 14.6,
-   "sleepNeedH": 7.88
+  "2026-07-17": {
+   "sleepH": 7.53,
+   "remH": 1.33,
+   "deepH": 2,
+   "lightH": 4.2,
+   "awakeH": 0.3,
+   "disturbances": 13,
+   "sleepPerf": 92,
+   "sleepConsistency": 85,
+   "sleepEfficiency": 96.2,
+   "respRate": 14.3,
+   "sleepNeedH": 8
   }
  }
 }
