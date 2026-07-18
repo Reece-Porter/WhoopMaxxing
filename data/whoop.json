@@ -1,11 +1,11 @@
 {
- "updated": "2026-07-18T13:49:22.922Z",
+ "updated": "2026-07-18T16:11:02.260Z",
  "source": "whoop-api",
  "days": {
   "2026-07-18": {
    "strain": 11.8,
-   "calories": 1460,
-   "avgHR": 77,
+   "calories": 1510,
+   "avgHR": 76,
    "maxHR": 155,
    "sleepH": 5.72,
    "remH": 0.8,
