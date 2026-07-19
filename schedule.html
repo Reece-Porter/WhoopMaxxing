@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schedule · ShiftMaxx</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23171512'/><path d='M17.5 3 7 17h5.5L11 29 22 14h-5.5L17.5 3z' fill='%23d9a441'/></svg>">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body data-page="schedule">
+  <header class="top" id="app-header"></header>
+  <div class="today-strip" id="today-strip"></div>
+
+  <main class="wrap" style="max-width:860px">
+    <h1>Daily schedule</h1>
+    <p class="sub">The recommended shape of each kind of day on your rota — when to sleep, eat, train, and bank your 10,000 steps. It auto-selects today's shift, adapts to where you are in the block, and eases off on red-recovery days. A template, not a rulebook.</p>
+
+    <div id="sched-banner"></div>
+
+    <div class="tabs" id="sched-tabs" role="tablist" aria-label="Day type"></div>
+    <div class="legend" id="sched-legend"></div>
+
+    <div class="tl" id="timeline"></div>
+
+    <h2>The maths behind it</h2>
+    <div class="grid cols-3">
+      <div class="card">
+        <h3 style="margin:0 0 6px;display:flex;align-items:center;gap:8px" id="steps-head"></h3>
+        <p class="notice" style="margin:0">10,000 steps ≈ 100 minutes of walking. On shift: commute walk (~1,700) + three walk breaks (~4,900) gets you past half before counting a single ward lap — 12 hours on your feet usually covers the rest. Off days need the deliberate 45–60 min walk; there's no ward doing the work for you.</p>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 6px;display:flex;align-items:center;gap:8px" id="gym-head"></h3>
+        <p class="notice" style="margin:0">Best slots in order: off-day mid-morning (hard sessions), pre-shift on nights (fed + rested), post-shift on days (short and sharp). Match intensity to recovery colour: green = push, yellow = zone 2 / lighter weights, red = mobility only. Never train between a night shift and day sleep.</p>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 6px;display:flex;align-items:center;gap:8px" id="clock-head"></h3>
+        <p class="notice" style="margin:0">The levers that make nights survivable: caffeine stops at midnight, sunglasses on the morning commute, one continuous day-sleep block, bright light during the 3–4am dip, and a SHORT sleep (not a full day) after the last night. Light and caffeine timing move your body clock more than willpower does.</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="assets/js/shifts.js"></script>
+  <script src="assets/js/store.js"></script>
+  <script src="assets/js/ui.js"></script>
+  <script src="assets/js/schedule.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('steps-head').innerHTML = SM.icon('activity') + 'Where the 10k comes from';
+      document.getElementById('gym-head').innerHTML = SM.icon('flame') + 'When to train';
+      document.getElementById('clock-head').innerHTML = SM.icon('moon') + 'Body-clock rules';
+    });
+  </script>
+</body>
+</html>

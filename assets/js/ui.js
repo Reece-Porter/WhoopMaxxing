@@ -37,6 +37,7 @@ const SM = (() => {
   const NAV = [
     ['index.html', 'home', 'home', 'Dashboard'],
     ['rota.html', 'rota', 'calendar', 'Rota'],
+    ['schedule.html', 'schedule', 'clock', 'Schedule'],
     ['whoop.html', 'whoop', 'activity', 'Whoop'],
     ['meals.html', 'meals', 'utensils', 'Meal prep'],
     ['batches.html', 'batches', 'pot', 'Batch cook'],
