@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-11T05:47:16.998Z",
+ "updated": "2026-10-11T12:50:42.918Z",
  "source": "whoop-api",
  "days": {
   "2026-07-23": {
@@ -145,17 +145,6 @@
    "calories": 1718,
    "avgHR": 60,
    "maxHR": 116,
-   "sleepH": 8.13,
-   "remH": 1.67,
-   "deepH": 1.8,
-   "lightH": 4.66,
-   "awakeH": 0.21,
-   "disturbances": 10,
-   "sleepPerf": 95,
-   "sleepConsistency": 0,
-   "sleepEfficiency": 97.5,
-   "respRate": 13.9,
-   "sleepNeedH": 8.49,
    "recovery": 78,
    "hrv": 94,
    "rhr": 51,
@@ -166,12 +155,7 @@
    "strain": 10.2,
    "calories": 2131,
    "avgHR": 67,
-   "maxHR": 162,
-   "recovery": 78,
-   "hrv": 94,
-   "rhr": 49,
-   "spo2": 95.2,
-   "skinTemp": 32.8
+   "maxHR": 162
   },
   "2026-07-19": {
    "sleepH": 5.97,
