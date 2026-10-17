@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-16T23:35:51.195Z",
+ "updated": "2026-10-17T04:26:45.960Z",
  "source": "whoop-api",
  "days": {
   "2026-07-23": {
@@ -53,10 +53,10 @@
    "skinTemp": 32.9
   },
   "2026-07-18": {
-   "strain": 14.5,
-   "calories": 2525,
-   "avgHR": 80,
-   "maxHR": 166,
+   "strain": 4.9,
+   "calories": 1632,
+   "avgHR": 71,
+   "maxHR": 115,
    "recovery": 74,
    "hrv": 89,
    "rhr": 59,
