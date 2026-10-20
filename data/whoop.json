@@ -1,5 +1,5 @@
 {
- "updated": "2026-10-20T00:20:21.029Z",
+ "updated": "2026-10-20T08:33:01.328Z",
  "source": "whoop-api",
  "days": {
   "2026-07-23": {
@@ -7,12 +7,6 @@
    "calories": 1,
    "avgHR": 60,
    "maxHR": 65
-  },
-  "2026-07-21": {
-   "strain": 5.4,
-   "calories": 1196,
-   "avgHR": 60,
-   "maxHR": 130
   }
  }
 }
